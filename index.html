@@ -250,7 +250,7 @@
     .search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 
     .table-wrap { overflow-x: auto; }
-    table { width: 100%; min-width: 930px; border-collapse: collapse; }
+    table { width: 100%; min-width: 1030px; border-collapse: collapse; }
     th { padding: 13px 17px; text-align: left; background: #f5f7f9; color: #647080; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
     td { padding: 15px 17px; border-top: 1px solid var(--line); color: #303a46; font-size: 14px; }
     tbody tr:hover { background: #fafbfd; }
@@ -262,6 +262,11 @@
     .status.parcial { background: var(--warning-bg); color: var(--warning); }
     .status.nao { background: var(--danger-bg); color: var(--danger); }
     .actions { display: flex; justify-content: flex-end; gap: 7px; }
+    .photo-stack { min-width: 78px; display: flex; align-items: center; gap: 7px; }
+    .service-thumb { width: 46px; height: 46px; padding: 0; overflow: hidden; border: 2px solid #fff; border-radius: 11px; background: var(--surface-soft); box-shadow: 0 0 0 1px var(--line); }
+    .service-thumb img { width: 100%; height: 100%; display: block; object-fit: cover; }
+    .photo-count { min-width: 25px; height: 25px; padding: 0 7px; display: grid; place-items: center; border-radius: 999px; background: var(--accent-soft); color: var(--accent-dark); font-size: 11px; font-weight: 900; }
+    .no-photo { color: var(--muted); font-size: 12px; }
     .empty { padding: 58px 20px; text-align: center; color: var(--muted); }
     .empty strong { display: block; margin-bottom: 6px; color: var(--ink); font-size: 18px; }
 
@@ -282,6 +287,8 @@
     .mobile-card-value strong { color: var(--accent-dark); font-size: 19px; }
     .mobile-card-footer { margin-top: 13px; }
     .mobile-card-place { max-width: 58%; overflow: hidden; color: var(--muted); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+    .mobile-photo-strip { margin: 13px 0 3px; display: flex; gap: 7px; }
+    .mobile-photo-strip .service-thumb { width: 58px; height: 58px; }
 
     .modal-backdrop {
       position: fixed;
@@ -310,6 +317,29 @@
     .total-preview { grid-column: 1 / -1; padding: 15px 17px; display: flex; align-items: center; justify-content: space-between; border-radius: 12px; background: var(--accent-soft); color: var(--accent-dark); }
     .total-preview span { font-size: 13px; font-weight: 800; text-transform: uppercase; }
     .total-preview strong { font-size: 24px; }
+    .photo-field { grid-column: 1 / -1; padding: 16px; border: 1px dashed #bdc9d3; border-radius: 15px; background: #f8fafb; }
+    .photo-field-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+    .photo-field-header label { display: block; margin: 0 0 4px; color: var(--ink); font-weight: 900; }
+    .photo-field-header p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .photo-buttons { margin-top: 13px; display: flex; flex-wrap: wrap; gap: 9px; }
+    .photo-button { min-height: 43px; padding: 9px 13px; display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line); border-radius: 11px; background: #fff; color: var(--ink); font-weight: 850; }
+    .photo-button.primary { border-color: var(--accent); background: var(--accent); color: #fff; }
+    .photo-preview-grid { margin-top: 14px; display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 9px; }
+    .photo-preview { position: relative; aspect-ratio: 1; overflow: hidden; border-radius: 13px; background: #e7edf1; box-shadow: inset 0 0 0 1px rgba(22,32,44,.08); }
+    .photo-preview img { width: 100%; height: 100%; display: block; object-fit: cover; }
+    .remove-photo { position: absolute; top: 6px; right: 6px; width: 28px; height: 28px; display: grid; place-items: center; border: 2px solid #fff; border-radius: 50%; background: rgba(177,43,43,.94); color: #fff; font-size: 16px; font-weight: 900; box-shadow: 0 4px 12px rgba(0,0,0,.22); }
+    .photo-number { position: absolute; left: 6px; bottom: 6px; min-width: 24px; height: 24px; padding: 0 7px; display: grid; place-items: center; border-radius: 8px; background: rgba(15,35,50,.78); color: #fff; font-size: 11px; font-weight: 900; }
+    .photo-empty { margin-top: 12px; color: var(--muted); font-size: 12px; }
+
+    .lightbox { position: fixed; inset: 0; z-index: 120; padding: 20px; display: none; place-items: center; background: rgba(5,14,21,.94); backdrop-filter: blur(12px); }
+    .lightbox.open { display: grid; }
+    .lightbox-image { max-width: min(1100px, 94vw); max-height: 82dvh; display: block; border-radius: 15px; box-shadow: 0 24px 80px rgba(0,0,0,.5); object-fit: contain; }
+    .lightbox-close, .lightbox-nav { position: absolute; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.1); color: #fff; backdrop-filter: blur(10px); }
+    .lightbox-close { top: max(16px, env(safe-area-inset-top)); right: 18px; width: 46px; height: 46px; border-radius: 14px; font-size: 27px; }
+    .lightbox-nav { top: 50%; width: 48px; height: 58px; border-radius: 14px; transform: translateY(-50%); font-size: 30px; }
+    .lightbox-prev { left: 18px; }
+    .lightbox-next { right: 18px; }
+    .lightbox-caption { position: absolute; bottom: max(16px, env(safe-area-inset-bottom)); left: 50%; padding: 8px 13px; border-radius: 999px; background: rgba(255,255,255,.12); color: #fff; font-size: 13px; font-weight: 800; transform: translateX(-50%); }
     .modal-footer { margin-top: 22px; display: flex; justify-content: flex-end; gap: 10px; }
 
     .toast { position: fixed; right: 22px; top: 94px; z-index: 80; padding: 13px 16px; border-radius: 12px; background: #153e5e; color: #fff; font-weight: 800; box-shadow: var(--shadow); opacity: 0; transform: translateY(-8px); pointer-events: none; transition: .25s ease; }
@@ -409,6 +439,15 @@
       .field input, .field select, .field textarea { min-height: 48px; font-size: 16px; }
       .modal-footer { flex-direction: column-reverse; }
       .modal-footer .button { width: 100%; min-height: 50px; }
+      .photo-field { padding: 14px 12px; }
+      .photo-buttons { display: grid; grid-template-columns: 1fr 1fr; }
+      .photo-button { justify-content: center; }
+      .photo-preview-grid { grid-template-columns: repeat(3, 1fr); }
+      .lightbox { padding: 8px; }
+      .lightbox-image { max-width: 98vw; max-height: 78dvh; border-radius: 10px; }
+      .lightbox-nav { width: 42px; height: 52px; }
+      .lightbox-prev { left: 8px; }
+      .lightbox-next { right: 8px; }
       .toast { top: 76px; right: 12px; left: 12px; text-align: center; }
       .auth-screen { padding: 12px; align-items: end; }
       .auth-card { padding: 26px 19px calc(24px + env(safe-area-inset-bottom)); border-radius: 24px 24px 0 0; }
@@ -494,7 +533,7 @@
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Data</th><th>Cliente</th><th>Serviço</th><th>Móvel / ambiente</th><th class="align-right">Valor</th><th>Recebimento</th><th class="align-right">Ações</th></tr></thead>
+          <thead><tr><th>Data</th><th>Cliente</th><th>Serviço</th><th>Móvel / ambiente</th><th class="align-right">Valor</th><th>Recebimento</th><th>Fotos</th><th class="align-right">Ações</th></tr></thead>
           <tbody id="service-list"></tbody>
         </table>
       </div>
@@ -539,6 +578,17 @@
           <div class="field"><label for="payment">Forma de pagamento</label><select id="payment"><option>Pix</option><option>Dinheiro</option><option>Cartão</option><option>Transferência</option><option>Boleto</option><option>Outro</option></select></div>
           <div class="field"><label for="received">Recebimento</label><select id="received"><option value="sim">Recebido</option><option value="parcial">Parcial</option><option value="nao" selected>Pendente</option></select></div>
           <div class="field full"><label for="notes">Observações</label><textarea id="notes" placeholder="Detalhes adicionais do serviço"></textarea></div>
+          <section class="photo-field" aria-labelledby="photos-label">
+            <div class="photo-field-header"><div><label id="photos-label">Fotos do serviço</label><p>Até 8 fotos. As imagens serão otimizadas antes do envio.</p></div><span class="photo-count" id="photo-total">0</span></div>
+            <div class="photo-buttons">
+              <button class="photo-button primary" id="take-photo" type="button">📷 Tirar foto</button>
+              <button class="photo-button" id="choose-photos" type="button">▧ Escolher da galeria</button>
+            </div>
+            <input type="file" id="camera-input" accept="image/*" capture="environment" hidden>
+            <input type="file" id="gallery-input" accept="image/*" multiple hidden>
+            <div class="photo-preview-grid" id="photo-preview-grid"></div>
+            <div class="photo-empty" id="photo-empty">Nenhuma foto anexada.</div>
+          </section>
         </div>
         <div class="modal-footer"><button class="button secondary" type="button" id="cancel">Cancelar</button><button class="button" type="submit" id="save-button">Registrar serviço</button></div>
       </form>
@@ -546,6 +596,14 @@
   </div>
 
   <div class="toast" id="toast">Serviço registrado</div>
+
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Visualização das fotos">
+    <button class="lightbox-close" id="lightbox-close" type="button" aria-label="Fechar">×</button>
+    <button class="lightbox-nav lightbox-prev" id="lightbox-prev" type="button" aria-label="Foto anterior">‹</button>
+    <img class="lightbox-image" id="lightbox-image" alt="Foto ampliada do serviço">
+    <button class="lightbox-nav lightbox-next" id="lightbox-next" type="button" aria-label="Próxima foto">›</button>
+    <span class="lightbox-caption" id="lightbox-caption"></span>
+  </div>
 
   <div class="modal-backdrop" id="install-modal" role="dialog" aria-modal="true" aria-labelledby="install-title">
     <section class="install-card">
@@ -580,7 +638,10 @@
 
     const $ = (selector) => document.querySelector(selector);
     const todayKey = dateKey(new Date());
-    const state = { category: "paraiba", reference: todayKey, search: "", editingId: null };
+    const state = {
+      category: "paraiba", reference: todayKey, search: "", editingId: null,
+      pendingPhotos: [], modalPhotos: [], deletedPhotos: [], lightboxPhotos: [], lightboxIndex: 0
+    };
     let services = [];
     let currentUser = null;
     let realtimeChannel = null;
@@ -621,7 +682,7 @@
       catch { services = []; }
     }
 
-    function dbToApp(row) {
+    function dbToApp(row, signedUrls = new Map()) {
       return {
         id: row.id,
         category: row.category,
@@ -634,7 +695,16 @@
         total: Number(row.total),
         payment: row.payment,
         received: row.received,
-        notes: row.notes || ""
+        notes: row.notes || "",
+        photos: (row.service_photos || []).map(photo => ({
+          id: photo.id,
+          path: photo.storage_path,
+          fileName: photo.file_name,
+          mimeType: photo.mime_type,
+          sizeBytes: Number(photo.size_bytes || 0),
+          createdAt: photo.created_at,
+          url: signedUrls.get(photo.storage_path) || ""
+        })).sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)))
       };
     }
 
@@ -666,6 +736,8 @@
       if (/invalid login credentials/i.test(message)) return "E-mail ou senha incorretos.";
       if (/email not confirmed/i.test(message)) return "Confirme o e-mail antes de entrar.";
       if (/user already registered/i.test(message)) return "Este e-mail já possui uma conta.";
+      if (/relation.*service_photos.*does not exist/i.test(message)) return "Execute a atualização SQL das fotos no Supabase.";
+      if (/bucket.*not found/i.test(message)) return "Execute a atualização SQL para criar o armazenamento das fotos.";
       if (/relation.*servicos.*does not exist/i.test(message)) return "A tabela ainda não foi criada no Supabase.";
       if (/failed to fetch|network/i.test(message)) return "Sem conexão com a internet.";
       return message;
@@ -674,13 +746,22 @@
     async function loadServices(silent = false) {
       if (!currentUser) return;
       if (!silent) setSyncStatus("", "Sincronizando...");
-      const { data, error } = await supabaseClient.from("servicos").select("*").order("service_date", { ascending: false });
+      const { data, error } = await supabaseClient
+        .from("servicos")
+        .select("*, service_photos(id, storage_path, file_name, mime_type, size_bytes, created_at)")
+        .order("service_date", { ascending: false });
       if (error) {
         setSyncStatus("offline", "Dados locais");
         if (!silent) showToast(friendlyError(error));
         return;
       }
-      services = (data || []).map(dbToApp);
+      const paths = (data || []).flatMap(row => (row.service_photos || []).map(photo => photo.storage_path));
+      const signedUrls = new Map();
+      if (paths.length) {
+        const { data: signedData } = await supabaseClient.storage.from("service-photos").createSignedUrls(paths, 21600);
+        (signedData || []).forEach(item => { if (item.signedUrl) signedUrls.set(item.path, item.signedUrl); });
+      }
+      services = (data || []).map(row => dbToApp(row, signedUrls));
       persistCache();
       render();
       setSyncStatus("online", "Sincronizado");
@@ -691,6 +772,7 @@
       realtimeChannel = supabaseClient
         .channel("servicos-" + currentUser.id)
         .on("postgres_changes", { event: "*", schema: "public", table: "servicos", filter: `user_id=eq.${currentUser.id}` }, () => loadServices(true))
+        .on("postgres_changes", { event: "*", schema: "public", table: "service_photos", filter: `user_id=eq.${currentUser.id}` }, () => loadServices(true))
         .subscribe(status => {
           if (status === "SUBSCRIBED") setSyncStatus("online", "Sincronizado");
           if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") setSyncStatus("offline", "Reconectando...");
@@ -775,7 +857,7 @@
       const term = state.search.trim().toLocaleLowerCase("pt-BR");
       const filtered = items.filter(item => !term || [item.client, item.service, item.environment, item.notes].some(value => String(value || "").toLocaleLowerCase("pt-BR").includes(term))).sort((a, b) => b.date.localeCompare(a.date));
       if (!filtered.length) {
-        $("#service-list").innerHTML = `<tr><td colspan="7"><div class="empty"><strong>Nenhum serviço encontrado</strong><span>Use o botão “Novo serviço” para fazer o primeiro lançamento.</span></div></td></tr>`;
+        $("#service-list").innerHTML = `<tr><td colspan="8"><div class="empty"><strong>Nenhum serviço encontrado</strong><span>Use o botão “Novo serviço” para fazer o primeiro lançamento.</span></div></td></tr>`;
         $("#mobile-service-list").innerHTML = `<div class="empty"><strong>Nenhum serviço encontrado</strong><span>Toque no botão central para fazer o primeiro lançamento.</span></div>`;
         return;
       }
@@ -784,20 +866,37 @@
           <td><span class="service-title">${escapeHTML(item.service)}</span><span class="service-sub">${escapeHTML(item.payment)}</span></td>
           <td>${escapeHTML(item.environment || "—")}</td><td class="align-right"><strong>${money(item.total)}</strong></td>
           <td><span class="status ${item.received}">${item.received === "sim" ? "Recebido" : item.received === "parcial" ? "Parcial" : "Pendente"}</span></td>
-          <td><div class="actions"><button class="button icon" onclick="editService('${item.id}')" aria-label="Editar">✎</button><button class="button icon delete" onclick="removeService('${item.id}')" aria-label="Excluir">⌫</button></div></td></tr>`).join("");
+          <td>${servicePhotoSummary(item)}</td>
+          <td><div class="actions"><button class="button icon" onclick="quickPhoto('${item.id}')" aria-label="Tirar foto" title="Tirar foto">📷</button><button class="button icon" onclick="editService('${item.id}')" aria-label="Editar">✎</button><button class="button icon delete" onclick="removeService('${item.id}')" aria-label="Excluir">⌫</button></div></td></tr>`).join("");
 
       $("#mobile-service-list").innerHTML = filtered.map(item => `
         <article class="mobile-service-card">
           <div class="mobile-card-top"><span class="mobile-card-date">${parseDate(item.date).toLocaleDateString("pt-BR")}</span><span class="status ${item.received}">${item.received === "sim" ? "Recebido" : item.received === "parcial" ? "Parcial" : "Pendente"}</span></div>
           <h3 class="mobile-card-title">${escapeHTML(item.service)}</h3><p class="mobile-card-client">${escapeHTML(item.client)}</p>
           <div class="mobile-card-value"><span>${item.quantity} × ${money(item.unitValue)}</span><strong>${money(item.total)}</strong></div>
-          <div class="mobile-card-footer"><span class="mobile-card-place">▣ ${escapeHTML(item.environment || "Sem ambiente informado")}</span><div class="actions"><button class="button icon" onclick="editService('${item.id}')" aria-label="Editar">✎</button><button class="button icon delete" onclick="removeService('${item.id}')" aria-label="Excluir">⌫</button></div></div>
+          ${mobilePhotoStrip(item)}
+          <div class="mobile-card-footer"><span class="mobile-card-place">▣ ${escapeHTML(item.environment || "Sem ambiente informado")}</span><div class="actions"><button class="button icon" onclick="quickPhoto('${item.id}')" aria-label="Tirar foto">📷</button><button class="button icon" onclick="editService('${item.id}')" aria-label="Editar">✎</button><button class="button icon delete" onclick="removeService('${item.id}')" aria-label="Excluir">⌫</button></div></div>
         </article>`).join("");
+    }
+
+    function servicePhotoSummary(item) {
+      const photos = item.photos || [];
+      if (!photos.length) return `<span class="no-photo">Sem foto</span>`;
+      return `<div class="photo-stack"><button class="service-thumb" type="button" onclick="openLightbox('${item.id}', 0)" aria-label="Abrir fotos"><img src="${escapeHTML(photos[0].url)}" alt="Foto do serviço" loading="lazy"></button><span class="photo-count">${photos.length}</span></div>`;
+    }
+
+    function mobilePhotoStrip(item) {
+      const photos = item.photos || [];
+      if (!photos.length) return "";
+      return `<div class="mobile-photo-strip">${photos.slice(0, 3).map((photo, index) => `<button class="service-thumb" type="button" onclick="openLightbox('${item.id}', ${index})" aria-label="Abrir foto ${index + 1}"><img src="${escapeHTML(photo.url)}" alt="Foto ${index + 1} do serviço" loading="lazy"></button>`).join("")}${photos.length > 3 ? `<span class="photo-count">+${photos.length - 3}</span>` : ""}</div>`;
     }
 
     function openModal(item = null) {
       if (!currentUser) return;
+      clearPendingPhotoPreviews();
       state.editingId = item?.id || null;
+      state.modalPhotos = [...(item?.photos || [])];
+      state.deletedPhotos = [];
       $("#modal-title").textContent = item ? "Editar serviço" : "Registrar novo serviço";
       $("#save-button").textContent = item ? "Salvar alterações" : "Registrar serviço";
       $("#category").value = item?.category || state.category;
@@ -811,6 +910,7 @@
       $("#received").value = item?.received || "nao";
       $("#notes").value = item?.notes || "";
       updateFormTotal();
+      renderPhotoPicker();
       $("#modal").classList.add("open");
       setTimeout(() => $("#client").focus(), 50);
     }
@@ -818,6 +918,91 @@
     function closeModal() {
       $("#modal").classList.remove("open");
       state.editingId = null;
+      clearPendingPhotoPreviews();
+      state.modalPhotos = [];
+      state.deletedPhotos = [];
+    }
+
+    function clearPendingPhotoPreviews() {
+      state.pendingPhotos.forEach(photo => URL.revokeObjectURL(photo.previewUrl));
+      state.pendingPhotos = [];
+      if ($("#camera-input")) $("#camera-input").value = "";
+      if ($("#gallery-input")) $("#gallery-input").value = "";
+    }
+
+    function renderPhotoPicker() {
+      const existing = state.modalPhotos.map((photo, index) => `
+        <div class="photo-preview"><img src="${escapeHTML(photo.url)}" alt="Foto anexada ${index + 1}"><button class="remove-photo" type="button" onclick="removeModalPhoto('existing','${photo.id}')" aria-label="Remover foto">×</button><span class="photo-number">${index + 1}</span></div>`);
+      const pending = state.pendingPhotos.map((photo, index) => `
+        <div class="photo-preview"><img src="${escapeHTML(photo.previewUrl)}" alt="Nova foto ${index + 1}"><button class="remove-photo" type="button" onclick="removeModalPhoto('pending','${photo.id}')" aria-label="Remover nova foto">×</button><span class="photo-number">Nova</span></div>`);
+      const total = existing.length + pending.length;
+      $("#photo-preview-grid").innerHTML = existing.concat(pending).join("");
+      $("#photo-total").textContent = total;
+      $("#photo-empty").hidden = total > 0;
+    }
+
+    function addSelectedPhotos(fileList) {
+      const files = Array.from(fileList || []).filter(file => file.type.startsWith("image/"));
+      const available = 8 - state.modalPhotos.length - state.pendingPhotos.length;
+      if (available <= 0) return showToast("Este serviço já possui o limite de 8 fotos.");
+      files.slice(0, available).forEach(file => {
+        if (file.size > 20 * 1024 * 1024) return showToast(`A foto ${file.name} é maior que 20 MB.`);
+        state.pendingPhotos.push({ id: crypto.randomUUID(), file, previewUrl: URL.createObjectURL(file) });
+      });
+      if (files.length > available) showToast(`Foram adicionadas ${available} foto(s). O limite é 8.`);
+      renderPhotoPicker();
+    }
+
+    function removeModalPhoto(kind, id) {
+      if (kind === "existing") {
+        const photo = state.modalPhotos.find(item => item.id === id);
+        if (photo) state.deletedPhotos.push(photo);
+        state.modalPhotos = state.modalPhotos.filter(item => item.id !== id);
+      } else {
+        const photo = state.pendingPhotos.find(item => item.id === id);
+        if (photo) URL.revokeObjectURL(photo.previewUrl);
+        state.pendingPhotos = state.pendingPhotos.filter(item => item.id !== id);
+      }
+      renderPhotoPicker();
+    }
+
+    function quickPhoto(id) {
+      const item = services.find(service => service.id === id);
+      if (!item) return;
+      openModal(item);
+      setTimeout(() => $("#camera-input").click(), 120);
+    }
+
+    function openLightbox(serviceId, index = 0) {
+      const item = services.find(service => service.id === serviceId);
+      if (!item?.photos?.length) return;
+      state.lightboxPhotos = item.photos;
+      state.lightboxIndex = Math.max(0, Math.min(index, item.photos.length - 1));
+      renderLightbox();
+      $("#lightbox").classList.add("open");
+    }
+
+    function renderLightbox() {
+      const photo = state.lightboxPhotos[state.lightboxIndex];
+      if (!photo) return closeLightbox();
+      $("#lightbox-image").src = photo.url;
+      $("#lightbox-caption").textContent = `${state.lightboxIndex + 1} de ${state.lightboxPhotos.length}`;
+      const multiple = state.lightboxPhotos.length > 1;
+      $("#lightbox-prev").hidden = !multiple;
+      $("#lightbox-next").hidden = !multiple;
+    }
+
+    function moveLightbox(amount) {
+      const count = state.lightboxPhotos.length;
+      if (!count) return;
+      state.lightboxIndex = (state.lightboxIndex + amount + count) % count;
+      renderLightbox();
+    }
+
+    function closeLightbox() {
+      $("#lightbox").classList.remove("open");
+      $("#lightbox-image").removeAttribute("src");
+      state.lightboxPhotos = [];
     }
 
     function updateFormTotal() {
@@ -829,10 +1014,107 @@
       if (item) openModal(item);
     }
 
+    async function optimizeImage(file) {
+      try {
+        let imageSource;
+        let sourceWidth;
+        let sourceHeight;
+        let cleanup = () => {};
+        try {
+          const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+          imageSource = bitmap;
+          sourceWidth = bitmap.width;
+          sourceHeight = bitmap.height;
+          cleanup = () => bitmap.close?.();
+        } catch {
+          const objectUrl = URL.createObjectURL(file);
+          const image = await new Promise((resolve, reject) => {
+            const element = new Image();
+            element.onload = () => resolve(element);
+            element.onerror = () => reject(new Error("Formato de imagem não reconhecido."));
+            element.src = objectUrl;
+          });
+          imageSource = image;
+          sourceWidth = image.naturalWidth;
+          sourceHeight = image.naturalHeight;
+          cleanup = () => URL.revokeObjectURL(objectUrl);
+        }
+        const maxSide = 1600;
+        const scale = Math.min(1, maxSide / Math.max(sourceWidth, sourceHeight));
+        const width = Math.max(1, Math.round(sourceWidth * scale));
+        const height = Math.max(1, Math.round(sourceHeight * scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext("2d");
+        context.fillStyle = "#ffffff";
+        context.fillRect(0, 0, width, height);
+        context.drawImage(imageSource, 0, 0, width, height);
+        cleanup();
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", .82));
+        if (!blob) throw new Error("Não foi possível otimizar a imagem.");
+        return { blob, contentType: "image/jpeg", extension: "jpg" };
+      } catch (error) {
+        if (file.size > 6 * 1024 * 1024) throw new Error("Esta imagem não pôde ser otimizada. Escolha uma foto menor que 6 MB.");
+        const extension = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+        return { blob: file, contentType: file.type || "image/jpeg", extension };
+      }
+    }
+
+    async function deleteQueuedPhotos() {
+      if (!state.deletedPhotos.length) return 0;
+      const paths = state.deletedPhotos.map(photo => photo.path);
+      const ids = state.deletedPhotos.map(photo => photo.id);
+      const { error: storageError } = await supabaseClient.storage.from("service-photos").remove(paths);
+      if (storageError) throw storageError;
+      const { error: databaseError } = await supabaseClient.from("service_photos").delete().in("id", ids);
+      if (databaseError) throw databaseError;
+      return ids.length;
+    }
+
+    async function uploadPendingPhotos(serviceId) {
+      let uploaded = 0;
+      const failures = [];
+      for (const pending of state.pendingPhotos) {
+        let storagePath = "";
+        try {
+          const optimized = await optimizeImage(pending.file);
+          storagePath = `${currentUser.id}/${serviceId}/${crypto.randomUUID()}.${optimized.extension}`;
+          const { error: uploadError } = await supabaseClient.storage.from("service-photos").upload(storagePath, optimized.blob, {
+            cacheControl: "31536000", contentType: optimized.contentType, upsert: false
+          });
+          if (uploadError) throw uploadError;
+          const { error: rowError } = await supabaseClient.from("service_photos").insert({
+            user_id: currentUser.id,
+            service_id: serviceId,
+            storage_path: storagePath,
+            file_name: pending.file.name || "foto.jpg",
+            mime_type: optimized.contentType,
+            size_bytes: optimized.blob.size
+          });
+          if (rowError) {
+            await supabaseClient.storage.from("service-photos").remove([storagePath]);
+            throw rowError;
+          }
+          uploaded++;
+        } catch (error) {
+          failures.push(friendlyError(error));
+        }
+      }
+      return { uploaded, failures };
+    }
+
     async function removeService(id) {
       const item = services.find(service => service.id === id);
       if (!item || !confirm(`Excluir o serviço “${item.service}”?`)) return;
       setSyncStatus("", "Excluindo...");
+      if (item.photos?.length) {
+        const { error: photoError } = await supabaseClient.storage.from("service-photos").remove(item.photos.map(photo => photo.path));
+        if (photoError) {
+          setSyncStatus("offline", "Erro ao sincronizar");
+          return showToast(friendlyError(photoError));
+        }
+      }
       const { error } = await supabaseClient.from("servicos").delete().eq("id", id);
       if (error) {
         setSyncStatus("offline", "Erro ao sincronizar");
@@ -869,11 +1151,23 @@
     $("#cancel").addEventListener("click", closeModal);
     $("#quantity").addEventListener("input", updateFormTotal);
     $("#unit-value").addEventListener("input", updateFormTotal);
+    $("#take-photo").addEventListener("click", () => $("#camera-input").click());
+    $("#choose-photos").addEventListener("click", () => $("#gallery-input").click());
+    $("#camera-input").addEventListener("change", event => addSelectedPhotos(event.target.files));
+    $("#gallery-input").addEventListener("change", event => addSelectedPhotos(event.target.files));
     $("#modal").addEventListener("click", event => { if (event.target === $("#modal")) closeModal(); });
     $("#close-install").addEventListener("click", closeInstallHelp);
     $("#understood-install").addEventListener("click", closeInstallHelp);
     $("#install-modal").addEventListener("click", event => { if (event.target === $("#install-modal")) closeInstallHelp(); });
-    document.addEventListener("keydown", event => { if (event.key === "Escape") { closeModal(); closeInstallHelp(); } });
+    $("#lightbox-close").addEventListener("click", closeLightbox);
+    $("#lightbox-prev").addEventListener("click", () => moveLightbox(-1));
+    $("#lightbox-next").addEventListener("click", () => moveLightbox(1));
+    $("#lightbox").addEventListener("click", event => { if (event.target === $("#lightbox")) closeLightbox(); });
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") { closeModal(); closeInstallHelp(); closeLightbox(); }
+      if ($("#lightbox").classList.contains("open") && event.key === "ArrowLeft") moveLightbox(-1);
+      if ($("#lightbox").classList.contains("open") && event.key === "ArrowRight") moveLightbox(1);
+    });
 
     $("#auth-form").addEventListener("submit", async event => {
       event.preventDefault();
@@ -939,11 +1233,24 @@
       if (wasEditing) services = services.map(item => item.id === saved.id ? saved : item);
       else services.unshift(saved);
       state.category = saved.category;
+      const photoFailures = [];
+      if (state.deletedPhotos.length) {
+        setSyncStatus("", "Removendo fotos...");
+        try { await deleteQueuedPhotos(); }
+        catch (photoError) { photoFailures.push(friendlyError(photoError)); }
+      }
+      if (state.pendingPhotos.length) {
+        setSyncStatus("", `Enviando ${state.pendingPhotos.length} foto(s)...`);
+        const photoResult = await uploadPendingPhotos(saved.id);
+        photoFailures.push(...photoResult.failures);
+      }
+      await loadServices(true);
       persistCache();
       closeModal();
       render();
       setSyncStatus("online", "Sincronizado");
-      showToast(wasEditing ? "Serviço atualizado" : "Serviço registrado");
+      if (photoFailures.length) showToast(`Serviço salvo, mas ${photoFailures.length} foto(s) não foram enviadas.`);
+      else showToast(wasEditing ? "Serviço e fotos atualizados" : "Serviço registrado");
     });
 
     $("#install-app").addEventListener("click", async () => {
@@ -964,6 +1271,9 @@
 
     window.editService = editService;
     window.removeService = removeService;
+    window.quickPhoto = quickPhoto;
+    window.openLightbox = openLightbox;
+    window.removeModalPhoto = removeModalPhoto;
     if (isInstalled()) $("#install-app").hidden = true;
     if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));
 

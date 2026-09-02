@@ -1,6 +1,16 @@
 # Controle do Marceneiro — PWA
 
-Sistema responsivo para registrar serviços e acompanhar a produção diária, semanal e mensal nas categorias **Serviços Paraíba** e **Pessoais**. Esta versão possui login, banco de dados Supabase e sincronização entre aparelhos.
+Sistema responsivo para registrar serviços e acompanhar a produção diária, semanal e mensal nas categorias **Serviços Paraíba** e **Pessoais**. Possui login, banco de dados Supabase, sincronização entre aparelhos e fotos privadas em cada serviço.
+
+## Atualização das fotos
+
+Mesmo que você já tenha configurado a versão anterior, execute novamente o arquivo completo `SUPABASE_SETUP.sql`. Ele preserva os serviços existentes e adiciona:
+
+- tabela organizada dos anexos;
+- armazenamento privado das imagens;
+- regras para cada usuário acessar somente as próprias fotos;
+- limite de 8 fotos por serviço na interface;
+- câmera traseira, galeria e visualização ampliada.
 
 ## Preparar o Supabase
 
