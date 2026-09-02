@@ -748,23 +748,34 @@
       if (!silent) setSyncStatus("", "Sincronizando...");
       const { data, error } = await supabaseClient
         .from("servicos")
-        .select("*, service_photos(id, storage_path, file_name, mime_type, size_bytes, created_at)")
+        .select("*")
         .order("service_date", { ascending: false });
       if (error) {
         setSyncStatus("offline", "Dados locais");
         if (!silent) showToast(friendlyError(error));
         return;
       }
-      const paths = (data || []).flatMap(row => (row.service_photos || []).map(photo => photo.storage_path));
+      const { data: photoRows, error: photoError } = await supabaseClient
+        .from("service_photos")
+        .select("id, service_id, storage_path, file_name, mime_type, size_bytes, created_at")
+        .order("created_at", { ascending: true });
+      const photosByService = new Map();
+      (photoRows || []).forEach(photo => {
+        if (!photosByService.has(photo.service_id)) photosByService.set(photo.service_id, []);
+        photosByService.get(photo.service_id).push(photo);
+      });
+      const rowsWithPhotos = (data || []).map(row => ({ ...row, service_photos: photosByService.get(row.id) || [] }));
+      const paths = (photoRows || []).map(photo => photo.storage_path);
       const signedUrls = new Map();
       if (paths.length) {
         const { data: signedData } = await supabaseClient.storage.from("service-photos").createSignedUrls(paths, 21600);
         (signedData || []).forEach(item => { if (item.signedUrl) signedUrls.set(item.path, item.signedUrl); });
       }
-      services = (data || []).map(row => dbToApp(row, signedUrls));
+      services = rowsWithPhotos.map(row => dbToApp(row, signedUrls));
       persistCache();
       render();
       setSyncStatus("online", "Sincronizado");
+      if (photoError && !silent) showToast("Serviços carregados. Execute a atualização SQL para ativar as fotos.");
     }
 
     function subscribeRealtime() {
