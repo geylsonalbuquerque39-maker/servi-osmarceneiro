@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#173f61">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Marceneiro">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
+  <title>Controle do Marceneiro</title>
+  <style>
+    :root {
+      --bg: #edf1f5;
+      --surface: #ffffff;
+      --surface-soft: #f6f8fa;
+      --ink: #16202c;
+      --muted: #657080;
+      --line: #dbe1e7;
+      --accent: #1d5f91;
+      --accent-dark: #173f61;
+      --accent-soft: #e1eef7;
+      --wood: #b8793f;
+      --success: #18723d;
+      --success-bg: #def4e6;
+      --warning: #906000;
+      --warning-bg: #fff0c9;
+      --danger: #b12b2b;
+      --danger-bg: #fde4e4;
+      --shadow: 0 14px 34px rgba(22, 32, 44, .08);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body.personal {
+      --accent: #995f2f;
+      --accent-dark: #643c1f;
+      --accent-soft: #f4e6d8;
+    }
+
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+
+    .topbar {
+      height: 78px;
+      padding: 0 clamp(18px, 4vw, 58px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      background: #102c43;
+      color: #fff;
+      border-bottom: 4px solid var(--wood);
+    }
+
+    .brand { display: flex; align-items: center; gap: 13px; }
+    .brand-mark {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border-radius: 13px;
+      background: var(--wood);
+      color: #fff;
+      font-size: 22px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.22);
+    }
+    .brand small { display: block; margin-bottom: 2px; font-size: 11px; letter-spacing: .15em; color: #adc1d1; }
+    .brand h1 { margin: 0; font-size: clamp(18px, 3vw, 23px); line-height: 1.1; }
+
+    .mode-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 13px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      color: #dbe8f1;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .mode-dot { width: 8px; height: 8px; border-radius: 50%; background: #f1b85d; box-shadow: 0 0 0 4px rgba(241,184,93,.15); }
+    .topbar-actions { display: flex; align-items: center; gap: 9px; }
+    .install-button {
+      min-height: 39px;
+      padding: 8px 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 11px;
+      background: #b8793f;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 900;
+    }
+    .install-button[hidden] { display: none; }
+
+    .workspace { width: min(1480px, calc(100% - 34px)); margin: 0 auto; padding: 28px 0 44px; }
+    .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 18px; }
+
+    .tabs {
+      display: inline-flex;
+      padding: 5px;
+      gap: 5px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: 0 5px 16px rgba(22,32,44,.04);
+    }
+    .tab {
+      padding: 11px 18px;
+      border: 0;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 800;
+    }
+    .tab.active { background: var(--accent); color: #fff; box-shadow: 0 6px 14px color-mix(in srgb, var(--accent) 24%, transparent); }
+
+    .toolbar-actions { display: flex; align-items: center; gap: 12px; }
+    .date-box {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-height: 44px;
+      padding: 5px 7px 5px 13px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--surface);
+    }
+    .date-box label { color: var(--muted); font-size: 13px; font-weight: 700; }
+    .date-box input { width: 145px; padding: 7px; border: 0; outline: 0; background: transparent; color: var(--ink); font-weight: 700; }
+
+    .button {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border: 1px solid transparent;
+      border-radius: 11px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 800;
+      transition: transform .18s ease, filter .18s ease;
+    }
+    .button:hover { filter: brightness(1.06); transform: translateY(-1px); }
+    .button.secondary { background: #fff; color: var(--ink); border-color: var(--line); }
+    .button.danger { background: var(--danger); }
+    .button.icon { width: 36px; min-height: 36px; padding: 0; background: transparent; color: var(--muted); border-color: var(--line); }
+    .button.icon:hover { color: var(--accent); background: var(--accent-soft); }
+    .button.icon.delete:hover { color: var(--danger); background: var(--danger-bg); }
+
+    .demo-note {
+      margin-bottom: 18px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      border: 1px solid #e5d5b3;
+      border-radius: 13px;
+      background: #fff8e8;
+      color: #70551e;
+      font-size: 13px;
+    }
+
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 18px; }
+    .kpi {
+      min-height: 132px;
+      padding: 22px;
+      display: flex;
+      align-items: flex-start;
+      gap: 15px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .kpi:first-child { border-color: color-mix(in srgb, var(--accent) 34%, white); background: linear-gradient(145deg, var(--accent-soft), #fff 72%); }
+    .kpi:last-child .kpi-icon { color: var(--warning); background: var(--warning-bg); }
+    .kpi-icon { width: 42px; height: 42px; flex: 0 0 42px; display: grid; place-items: center; border-radius: 12px; background: var(--accent-soft); color: var(--accent); font-size: 20px; }
+    .kpi span { display: block; margin-bottom: 7px; color: var(--muted); font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+    .kpi strong { display: block; font-size: clamp(22px, 2.3vw, 31px); line-height: 1.1; color: var(--accent-dark); }
+    .kpi small { display: block; margin-top: 8px; color: var(--muted); }
+
+    .overview-grid { display: grid; grid-template-columns: minmax(0, 1fr) 310px; gap: 14px; margin-bottom: 18px; }
+    .panel { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); }
+    .panel-header { padding: 20px 22px 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .panel-kicker { display: block; margin-bottom: 4px; color: var(--accent); font-size: 11px; font-weight: 900; letter-spacing: .12em; }
+    .panel h2 { margin: 0; font-size: 20px; }
+    .category-chip { padding: 7px 10px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); background: var(--surface-soft); font-size: 12px; font-weight: 800; }
+
+    .chart { height: 225px; padding: 10px 22px 20px; display: grid; grid-template-columns: repeat(7, minmax(35px, 1fr)); gap: 12px; align-items: end; }
+    .bar-slot { height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 7px; }
+    .bar-track { width: min(48px, 80%); height: 160px; display: flex; align-items: flex-end; border-radius: 9px; background: repeating-linear-gradient(to top, #f0f3f6 0, #f0f3f6 1px, transparent 1px, transparent 40px); }
+    .bar-fill { width: 100%; min-height: 4px; border-radius: 8px 8px 3px 3px; background: linear-gradient(180deg, var(--accent), var(--accent-dark)); transition: height .35s ease; }
+    .bar-slot strong { font-size: 11px; color: var(--muted); }
+    .bar-slot span { font-size: 12px; font-weight: 800; color: var(--ink); text-transform: capitalize; }
+
+    .payments { padding-bottom: 15px; }
+    .payment-item { margin: 0 20px; padding: 16px 0; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--line); }
+    .payment-item:last-child { border-bottom: 0; }
+    .payment-dot { width: 11px; height: 11px; border-radius: 50%; }
+    .payment-dot.paid { background: var(--success); }
+    .payment-dot.partial { background: #e2a51c; }
+    .payment-dot.pending { background: var(--danger); }
+    .payment-item div { flex: 1; }
+    .payment-item span { color: var(--muted); font-size: 13px; font-weight: 700; }
+    .payment-item strong { float: right; color: var(--ink); font-size: 20px; }
+
+    .services-panel { overflow: hidden; }
+    .services-header { padding: 20px 22px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--line); }
+    .search { position: relative; width: min(360px, 100%); }
+    .search span { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+    .search input { width: 100%; min-height: 42px; padding: 10px 12px 10px 38px; border: 1px solid var(--line); border-radius: 11px; outline: 0; background: var(--surface-soft); color: var(--ink); }
+    .search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; min-width: 930px; border-collapse: collapse; }
+    th { padding: 13px 17px; text-align: left; background: #f5f7f9; color: #647080; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+    td { padding: 15px 17px; border-top: 1px solid var(--line); color: #303a46; font-size: 14px; }
+    tbody tr:hover { background: #fafbfd; }
+    .align-right { text-align: right; }
+    .service-title { font-weight: 800; color: var(--ink); }
+    .service-sub { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; }
+    .status { display: inline-flex; padding: 6px 9px; border-radius: 999px; font-size: 12px; font-weight: 900; }
+    .status.sim { background: var(--success-bg); color: var(--success); }
+    .status.parcial { background: var(--warning-bg); color: var(--warning); }
+    .status.nao { background: var(--danger-bg); color: var(--danger); }
+    .actions { display: flex; justify-content: flex-end; gap: 7px; }
+    .empty { padding: 58px 20px; text-align: center; color: var(--muted); }
+    .empty strong { display: block; margin-bottom: 6px; color: var(--ink); font-size: 18px; }
+
+    .mobile-service-list, .mobile-bottom-nav { display: none; }
+
+    .mobile-service-card {
+      padding: 17px;
+      border-bottom: 1px solid var(--line);
+      background: var(--surface);
+    }
+    .mobile-service-card:last-child { border-bottom: 0; }
+    .mobile-card-top, .mobile-card-value, .mobile-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .mobile-card-date { color: var(--muted); font-size: 12px; font-weight: 800; }
+    .mobile-card-title { margin: 12px 0 3px; color: var(--ink); font-size: 17px; line-height: 1.25; }
+    .mobile-card-client { margin: 0 0 13px; color: var(--muted); font-size: 14px; }
+    .mobile-card-value { padding: 12px; border-radius: 12px; background: var(--surface-soft); }
+    .mobile-card-value span { color: var(--muted); font-size: 12px; }
+    .mobile-card-value strong { color: var(--accent-dark); font-size: 19px; }
+    .mobile-card-footer { margin-top: 13px; }
+    .mobile-card-place { max-width: 58%; overflow: hidden; color: var(--muted); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      padding: 24px;
+      display: none;
+      place-items: center;
+      background: rgba(10, 24, 35, .62);
+      backdrop-filter: blur(5px);
+    }
+    .modal-backdrop.open { display: grid; }
+    .modal { width: min(760px, 100%); max-height: calc(100vh - 48px); overflow: auto; border-radius: 20px; background: #fff; box-shadow: 0 28px 80px rgba(0,0,0,.28); }
+    .modal-header { padding: 23px 25px 17px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--line); }
+    .modal-header h2 { margin: 0 0 5px; font-size: 23px; }
+    .modal-header p { margin: 0; color: var(--muted); font-size: 14px; }
+    .close-modal { width: 38px; height: 38px; border: 0; border-radius: 10px; background: var(--surface-soft); color: var(--muted); font-size: 24px; }
+    .service-form { padding: 22px 25px 25px; }
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .field { display: flex; flex-direction: column; gap: 7px; }
+    .field.full { grid-column: 1 / -1; }
+    .field label { color: #44505d; font-size: 13px; font-weight: 800; }
+    .field input, .field select, .field textarea { width: 100%; min-height: 43px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; outline: 0; background: #fff; color: var(--ink); }
+    .field textarea { min-height: 82px; resize: vertical; }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .total-preview { grid-column: 1 / -1; padding: 15px 17px; display: flex; align-items: center; justify-content: space-between; border-radius: 12px; background: var(--accent-soft); color: var(--accent-dark); }
+    .total-preview span { font-size: 13px; font-weight: 800; text-transform: uppercase; }
+    .total-preview strong { font-size: 24px; }
+    .modal-footer { margin-top: 22px; display: flex; justify-content: flex-end; gap: 10px; }
+
+    .toast { position: fixed; right: 22px; top: 94px; z-index: 80; padding: 13px 16px; border-radius: 12px; background: #153e5e; color: #fff; font-weight: 800; box-shadow: var(--shadow); opacity: 0; transform: translateY(-8px); pointer-events: none; transition: .25s ease; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    .install-card { width: min(460px, 100%); padding: 25px; border-radius: 22px; background: #fff; box-shadow: 0 28px 80px rgba(0,0,0,.28); }
+    .install-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+    .install-app-icon { width: 60px; height: 60px; border-radius: 16px; box-shadow: 0 8px 20px rgba(23,63,97,.2); }
+    .install-card h2 { margin: 18px 0 7px; font-size: 24px; }
+    .install-card > p { margin: 0; color: var(--muted); line-height: 1.6; }
+    .install-steps { margin: 21px 0; display: grid; gap: 11px; }
+    .install-step { padding: 12px 13px; display: flex; align-items: center; gap: 12px; border-radius: 12px; background: var(--surface-soft); color: #34404c; font-size: 14px; }
+    .install-step strong { width: 28px; height: 28px; flex: 0 0 28px; display: grid; place-items: center; border-radius: 9px; background: var(--accent); color: #fff; }
+    .install-step b { color: var(--accent-dark); }
+
+    @media (max-width: 1080px) {
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .overview-grid { grid-template-columns: 1fr; }
+      .payments { display: grid; grid-template-columns: repeat(3, 1fr); padding: 0 14px 14px; }
+      .payment-item { margin: 0; padding: 14px; border: 0; }
+    }
+
+    @media (max-width: 760px) {
+      body { padding-bottom: 86px; }
+      .topbar { position: sticky; top: 0; z-index: 30; height: auto; min-height: 66px; padding: 9px 13px; border-bottom-width: 2px; box-shadow: 0 8px 25px rgba(10,24,35,.18); }
+      .brand { gap: 10px; }
+      .brand-mark { width: 40px; height: 40px; border-radius: 12px; }
+      .brand h1 { max-width: 190px; font-size: 17px; }
+      .brand small { display: block; font-size: 9px; }
+      .mode-badge { width: 39px; height: 39px; padding: 0; justify-content: center; border-radius: 50%; }
+      .mode-badge span:last-child { display: none; }
+      .install-button { width: 39px; min-height: 39px; padding: 0; justify-content: center; border-radius: 12px; font-size: 18px; }
+      .install-button span:last-child { display: none; }
+      .workspace { width: min(100% - 20px, 1480px); padding: 14px 0 20px; }
+      .toolbar { align-items: stretch; flex-direction: column; }
+      .tabs { width: 100%; padding: 4px; border-radius: 13px; }
+      .tab { min-height: 45px; flex: 1; padding: 9px 7px; font-size: 13px; }
+      .toolbar-actions { align-items: stretch; flex-direction: column; }
+      .date-box { justify-content: space-between; }
+      .date-box input { width: 142px; }
+      #new-service { display: none; }
+      .demo-note { margin-bottom: 14px; padding: 11px 13px; align-items: flex-start; flex-direction: column; gap: 3px; font-size: 12px; }
+      .kpi-grid { margin: 0 -10px 14px 0; padding: 0 10px 5px 0; display: flex; gap: 11px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+      .kpi-grid::-webkit-scrollbar { display: none; }
+      .kpi { min-width: min(82vw, 330px); min-height: 118px; padding: 18px; scroll-snap-align: start; box-shadow: 0 9px 24px rgba(22,32,44,.07); }
+      .kpi strong { font-size: 27px; }
+      .overview-grid { gap: 12px; margin-bottom: 14px; }
+      .panel { border-radius: 16px; box-shadow: 0 9px 24px rgba(22,32,44,.07); }
+      .panel-header { padding: 17px 16px 10px; }
+      .panel h2 { font-size: 18px; }
+      .category-chip { max-width: 125px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .chart { height: 195px; gap: 5px; padding: 7px 9px 15px; }
+      .bar-track { width: 82%; height: 130px; }
+      .bar-slot strong { max-width: 44px; overflow: hidden; font-size: 10px; text-overflow: ellipsis; }
+      .bar-slot span { font-size: 11px; }
+      .payments { grid-template-columns: 1fr; }
+      .payment-item { min-height: 58px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+      .services-header { align-items: stretch; flex-direction: column; }
+      .search { width: 100%; }
+      .table-wrap { display: none; }
+      .mobile-service-list { display: block; }
+      .mobile-service-card { padding: 16px; }
+      .mobile-service-card .button.icon { width: 43px; min-height: 43px; font-size: 18px; }
+      .form-grid { grid-template-columns: 1fr; }
+      .field.full, .total-preview { grid-column: 1; }
+      .modal-backdrop { padding: 0; align-items: end; }
+      .modal { width: 100%; max-height: 94dvh; border-radius: 22px 22px 0 0; animation: mobileSheet .24s ease-out; }
+      .install-card { width: 100%; padding: 23px 18px calc(22px + env(safe-area-inset-bottom)); border-radius: 22px 22px 0 0; animation: mobileSheet .24s ease-out; }
+      .modal-header { position: sticky; top: 0; z-index: 2; padding: 19px 18px 14px; background: #fff; }
+      .modal-header::before { content: ""; position: absolute; top: 7px; left: 50%; width: 42px; height: 4px; border-radius: 999px; background: #d7dde3; transform: translateX(-50%); }
+      .service-form { padding: 18px 16px 24px; }
+      .field input, .field select, .field textarea { min-height: 48px; font-size: 16px; }
+      .modal-footer { flex-direction: column-reverse; }
+      .modal-footer .button { width: 100%; min-height: 50px; }
+      .toast { top: 76px; right: 12px; left: 12px; text-align: center; }
+
+      .mobile-bottom-nav {
+        position: fixed;
+        right: 10px;
+        bottom: max(8px, env(safe-area-inset-bottom));
+        left: 10px;
+        z-index: 40;
+        height: 68px;
+        padding: 6px 8px;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        align-items: center;
+        border: 1px solid rgba(255,255,255,.12);
+        border-radius: 20px;
+        background: rgba(16, 44, 67, .96);
+        box-shadow: 0 14px 40px rgba(8,25,38,.32);
+        backdrop-filter: blur(18px);
+      }
+      .mobile-nav-button { min-width: 0; height: 54px; padding: 4px 2px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; border-radius: 13px; background: transparent; color: #b7c7d3; font-size: 10px; font-weight: 800; }
+      .mobile-nav-button .nav-icon { font-size: 19px; line-height: 1; }
+      .mobile-nav-button:active { background: rgba(255,255,255,.1); color: #fff; }
+      .mobile-nav-button.primary { width: 56px; height: 56px; justify-self: center; margin-top: -23px; border: 4px solid var(--bg); border-radius: 18px; background: var(--wood); color: #fff; box-shadow: 0 8px 18px rgba(184,121,63,.35); font-size: 24px; }
+      .mobile-nav-button.primary span:last-child { display: none; }
+    }
+
+    @keyframes mobileSheet { from { transform: translateY(28px); opacity: .7; } to { transform: translateY(0); opacity: 1; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">⚒</div>
+      <div><small>CONTROLE DA OFICINA</small><h1>Produção do Marceneiro</h1></div>
+    </div>
+    <div class="topbar-actions">
+      <button class="install-button" id="install-app" type="button"><span>⇩</span><span>Instalar app</span></button>
+      <div class="mode-badge"><span class="mode-dot"></span><span>Frontend funcionando</span></div>
+    </div>
+  </header>
+
+  <main class="workspace" id="inicio">
+    <section class="toolbar">
+      <div class="tabs" role="tablist" aria-label="Categoria dos serviços">
+        <button class="tab active" id="tab-paraiba" data-category="paraiba" role="tab">▣ Serviços Paraíba</button>
+        <button class="tab" id="tab-pessoal" data-category="pessoal" role="tab">♟ Pessoais</button>
+      </div>
+      <div class="toolbar-actions">
+        <div class="date-box"><span>📅</span><label for="reference-date">Data de referência</label><input type="date" id="reference-date"></div>
+        <button class="button" id="new-service">＋ Novo serviço</button>
+      </div>
+    </section>
+
+    <div class="demo-note"><strong>Frontend pronto para teste.</strong><span>Os dados ficam salvos neste navegador até conectarmos o Supabase.</span></div>
+
+    <section class="kpi-grid" aria-label="Resumo da produção">
+      <article class="kpi"><div class="kpi-icon">⚒</div><div><span>Produção do dia</span><strong id="daily-total">R$ 0,00</strong><small id="daily-count">0 serviço(s)</small></div></article>
+      <article class="kpi"><div class="kpi-icon">▥</div><div><span>Produção da semana</span><strong id="weekly-total">R$ 0,00</strong><small>Segunda a domingo</small></div></article>
+      <article class="kpi"><div class="kpi-icon">R$</div><div><span>Produção do mês</span><strong id="monthly-total">R$ 0,00</strong><small id="monthly-count">0 serviço(s)</small></div></article>
+      <article class="kpi"><div class="kpi-icon">◴</div><div><span>A receber no mês</span><strong id="pending-total">R$ 0,00</strong><small>Inclui pagamentos parciais</small></div></article>
+    </section>
+
+    <section class="overview-grid" id="resumo">
+      <article class="panel">
+        <div class="panel-header"><div><span class="panel-kicker">ÚLTIMOS 7 DIAS</span><h2>Ritmo de produção</h2></div><span class="category-chip" id="chart-category">Serviços Paraíba</span></div>
+        <div class="chart" id="chart"></div>
+      </article>
+      <article class="panel payments">
+        <div class="panel-header"><div><span class="panel-kicker">VISÃO DO MÊS</span><h2>Recebimentos</h2></div></div>
+        <div class="payment-item"><span class="payment-dot paid"></span><div><span>Recebidos</span><strong id="paid-count">0</strong></div></div>
+        <div class="payment-item"><span class="payment-dot partial"></span><div><span>Parciais</span><strong id="partial-count">0</strong></div></div>
+        <div class="payment-item"><span class="payment-dot pending"></span><div><span>Pendentes</span><strong id="unpaid-count">0</strong></div></div>
+      </article>
+    </section>
+
+    <section class="panel services-panel" id="servicos">
+      <div class="services-header">
+        <div><span class="panel-kicker">LANÇAMENTOS</span><h2 id="services-title">Serviços Paraíba</h2></div>
+        <div class="search"><span>⌕</span><input id="search" type="search" placeholder="Buscar cliente ou serviço" aria-label="Buscar serviço"></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Data</th><th>Cliente</th><th>Serviço</th><th>Móvel / ambiente</th><th class="align-right">Valor</th><th>Recebimento</th><th class="align-right">Ações</th></tr></thead>
+          <tbody id="service-list"></tbody>
+        </table>
+      </div>
+      <div class="mobile-service-list" id="mobile-service-list"></div>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal">
+      <div class="modal-header">
+        <div><h2 id="modal-title">Registrar novo serviço</h2><p>Informe o trabalho realizado e o valor combinado.</p></div>
+        <button class="close-modal" id="close-modal" aria-label="Fechar">×</button>
+      </div>
+      <form class="service-form" id="service-form">
+        <div class="form-grid">
+          <div class="field"><label for="category">Categoria</label><select id="category" required><option value="paraiba">Serviços Paraíba</option><option value="pessoal">Pessoais</option></select></div>
+          <div class="field"><label for="date">Data</label><input type="date" id="date" required></div>
+          <div class="field full"><label for="client">Cliente / solicitação</label><input id="client" required placeholder="Nome do cliente ou unidade"></div>
+          <div class="field full"><label for="service">Serviço realizado</label><input id="service" required placeholder="Ex.: montagem de armário"></div>
+          <div class="field full"><label for="environment">Móvel / ambiente</label><input id="environment" placeholder="Ex.: cozinha, quarto, painel"></div>
+          <div class="field"><label for="quantity">Quantidade</label><input type="number" id="quantity" min="1" step="1" value="1" required></div>
+          <div class="field"><label for="unit-value">Valor unitário</label><input type="number" id="unit-value" min="0" step="0.01" value="0" required></div>
+          <div class="total-preview"><span>Valor total</span><strong id="form-total">R$ 0,00</strong></div>
+          <div class="field"><label for="payment">Forma de pagamento</label><select id="payment"><option>Pix</option><option>Dinheiro</option><option>Cartão</option><option>Transferência</option><option>Boleto</option><option>Outro</option></select></div>
+          <div class="field"><label for="received">Recebimento</label><select id="received"><option value="sim">Recebido</option><option value="parcial">Parcial</option><option value="nao" selected>Pendente</option></select></div>
+          <div class="field full"><label for="notes">Observações</label><textarea id="notes" placeholder="Detalhes adicionais do serviço"></textarea></div>
+        </div>
+        <div class="modal-footer"><button class="button secondary" type="button" id="cancel">Cancelar</button><button class="button" type="submit" id="save-button">Registrar serviço</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Serviço registrado</div>
+
+  <div class="modal-backdrop" id="install-modal" role="dialog" aria-modal="true" aria-labelledby="install-title">
+    <section class="install-card">
+      <div class="install-card-header"><img class="install-app-icon" src="./apple-touch-icon.png" alt="Ícone do Controle do Marceneiro"><button class="close-modal" id="close-install" aria-label="Fechar">×</button></div>
+      <h2 id="install-title">Instalar no iPhone</h2>
+      <p>Adicione o Controle do Marceneiro à tela inicial para abrir como um aplicativo.</p>
+      <div class="install-steps">
+        <div class="install-step"><strong>1</strong><span>No Safari, toque em <b>Compartilhar</b> ⎋.</span></div>
+        <div class="install-step"><strong>2</strong><span>Escolha <b>Adicionar à Tela de Início</b>.</span></div>
+        <div class="install-step"><strong>3</strong><span>Toque em <b>Adicionar</b> para concluir.</span></div>
+      </div>
+      <button class="button" id="understood-install" type="button" style="width:100%">Entendi</button>
+    </section>
+  </div>
+
+  <nav class="mobile-bottom-nav" aria-label="Navegação mobile">
+    <button class="mobile-nav-button" data-mobile-action="inicio"><span class="nav-icon">⌂</span><span>Início</span></button>
+    <button class="mobile-nav-button" data-mobile-action="servicos"><span class="nav-icon">▤</span><span>Serviços</span></button>
+    <button class="mobile-nav-button primary" data-mobile-action="novo" aria-label="Novo serviço"><span class="nav-icon">＋</span><span>Novo</span></button>
+    <button class="mobile-nav-button" data-mobile-action="resumo"><span class="nav-icon">▥</span><span>Resumo</span></button>
+    <button class="mobile-nav-button" data-mobile-action="buscar"><span class="nav-icon">⌕</span><span>Buscar</span></button>
+  </nav>
+
+  <script>
+    const STORAGE_KEY = "controle-marceneiro-frontend-v1";
+    const todayKey = dateKey(new Date());
+    const state = { category: "paraiba", reference: todayKey, search: "", editingId: null };
+    let installPrompt = null;
+
+    const seed = [
+      { id: crypto.randomUUID(), category: "paraiba", date: todayKey, client: "Loja Centro", service: "Montagem de balcão", environment: "Atendimento", quantity: 1, unitValue: 480, total: 480, payment: "Transferência", received: "sim", notes: "" },
+      { id: crypto.randomUUID(), category: "paraiba", date: dateKey(addDays(new Date(), -1)), client: "Unidade Bacuri", service: "Ajuste de portas", environment: "Estoque", quantity: 3, unitValue: 85, total: 255, payment: "Boleto", received: "nao", notes: "Aguardando pagamento" },
+      { id: crypto.randomUUID(), category: "pessoal", date: todayKey, client: "Carlos Mendes", service: "Instalação de painel", environment: "Sala", quantity: 1, unitValue: 650, total: 650, payment: "Pix", received: "parcial", notes: "Entrada de R$ 300,00" }
+    ];
+
+    let services = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null") || seed;
+
+    const $ = (selector) => document.querySelector(selector);
+    const money = (value) => Number(value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    const parseDate = (value) => new Date(value + "T12:00:00");
+    const escapeHTML = (value) => String(value ?? "").replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
+
+    function dateKey(date) {
+      return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
+    }
+
+    function addDays(date, amount) {
+      const result = new Date(date);
+      result.setDate(result.getDate() + amount);
+      return result;
+    }
+
+    function startOfWeek(date) {
+      const result = new Date(date);
+      const day = result.getDay() || 7;
+      result.setDate(result.getDate() - day + 1);
+      result.setHours(0, 0, 0, 0);
+      return result;
+    }
+
+    function persist() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(services));
+    }
+
+    function categoryName() {
+      return state.category === "paraiba" ? "Serviços Paraíba" : "Serviços Pessoais";
+    }
+
+    function selectedServices() {
+      return services.filter(item => item.category === state.category);
+    }
+
+    function render() {
+      document.body.classList.toggle("personal", state.category === "pessoal");
+      document.querySelectorAll(".tab").forEach(tab => tab.classList.toggle("active", tab.dataset.category === state.category));
+      $("#services-title").textContent = categoryName();
+      $("#chart-category").textContent = categoryName();
+
+      const reference = parseDate(state.reference);
+      const weekStart = startOfWeek(reference);
+      const weekEnd = addDays(weekStart, 7);
+      const monthStart = new Date(reference.getFullYear(), reference.getMonth(), 1);
+      const monthEnd = new Date(reference.getFullYear(), reference.getMonth() + 1, 1);
+      const items = selectedServices();
+      const dayItems = items.filter(item => item.date === state.reference);
+      const weekItems = items.filter(item => { const date = parseDate(item.date); return date >= weekStart && date < weekEnd; });
+      const monthItems = items.filter(item => { const date = parseDate(item.date); return date >= monthStart && date < monthEnd; });
+      const total = list => list.reduce((sum, item) => sum + Number(item.total), 0);
+
+      $("#daily-total").textContent = money(total(dayItems));
+      $("#daily-count").textContent = dayItems.length + " serviço(s)";
+      $("#weekly-total").textContent = money(total(weekItems));
+      $("#monthly-total").textContent = money(total(monthItems));
+      $("#monthly-count").textContent = monthItems.length + " serviço(s)";
+      $("#pending-total").textContent = money(total(monthItems.filter(item => item.received !== "sim")));
+      $("#paid-count").textContent = monthItems.filter(item => item.received === "sim").length;
+      $("#partial-count").textContent = monthItems.filter(item => item.received === "parcial").length;
+      $("#unpaid-count").textContent = monthItems.filter(item => item.received === "nao").length;
+
+      renderChart(items, reference);
+      renderTable(items);
+    }
+
+    function renderChart(items, reference) {
+      const days = Array.from({ length: 7 }, (_, index) => {
+        const date = addDays(reference, index - 6);
+        const key = dateKey(date);
+        return { date, total: items.filter(item => item.date === key).reduce((sum, item) => sum + Number(item.total), 0) };
+      });
+      const max = Math.max(...days.map(day => day.total), 1);
+      $("#chart").innerHTML = days.map(day => {
+        const height = Math.max(day.total ? 8 : 2, (day.total / max) * 100);
+        const label = day.date.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "");
+        return `<div class="bar-slot" title="${escapeHTML(label)}: ${money(day.total)}"><strong>${day.total ? money(day.total).replace("R$ ", "") : "0"}</strong><div class="bar-track"><div class="bar-fill" style="height:${height}%"></div></div><span>${escapeHTML(label)}</span></div>`;
+      }).join("");
+    }
+
+    function renderTable(items) {
+      const term = state.search.trim().toLocaleLowerCase("pt-BR");
+      const filtered = items.filter(item => !term || [item.client, item.service, item.environment, item.notes].some(value => String(value).toLocaleLowerCase("pt-BR").includes(term))).sort((a, b) => b.date.localeCompare(a.date));
+      if (!filtered.length) {
+        $("#service-list").innerHTML = `<tr><td colspan="7"><div class="empty"><strong>Nenhum serviço encontrado</strong><span>Use o botão “Novo serviço” para fazer o primeiro lançamento.</span></div></td></tr>`;
+        $("#mobile-service-list").innerHTML = `<div class="empty"><strong>Nenhum serviço encontrado</strong><span>Toque no botão central para fazer o primeiro lançamento.</span></div>`;
+        return;
+      }
+      $("#service-list").innerHTML = filtered.map(item => `
+        <tr>
+          <td><strong>${parseDate(item.date).toLocaleDateString("pt-BR")}</strong></td>
+          <td>${escapeHTML(item.client)}</td>
+          <td><span class="service-title">${escapeHTML(item.service)}</span><span class="service-sub">${escapeHTML(item.payment)}</span></td>
+          <td>${escapeHTML(item.environment || "—")}</td>
+          <td class="align-right"><strong>${money(item.total)}</strong></td>
+          <td><span class="status ${item.received}">${item.received === "sim" ? "Recebido" : item.received === "parcial" ? "Parcial" : "Pendente"}</span></td>
+          <td><div class="actions"><button class="button icon" onclick="editService('${item.id}')" aria-label="Editar">✎</button><button class="button icon delete" onclick="removeService('${item.id}')" aria-label="Excluir">⌫</button></div></td>
+        </tr>`).join("");
+
+      $("#mobile-service-list").innerHTML = filtered.map(item => `
+        <article class="mobile-service-card">
+          <div class="mobile-card-top"><span class="mobile-card-date">${parseDate(item.date).toLocaleDateString("pt-BR")}</span><span class="status ${item.received}">${item.received === "sim" ? "Recebido" : item.received === "parcial" ? "Parcial" : "Pendente"}</span></div>
+          <h3 class="mobile-card-title">${escapeHTML(item.service)}</h3>
+          <p class="mobile-card-client">${escapeHTML(item.client)}</p>
+          <div class="mobile-card-value"><span>${item.quantity} × ${money(item.unitValue)}</span><strong>${money(item.total)}</strong></div>
+          <div class="mobile-card-footer"><span class="mobile-card-place">▣ ${escapeHTML(item.environment || "Sem ambiente informado")}</span><div class="actions"><button class="button icon" onclick="editService('${item.id}')" aria-label="Editar ${escapeHTML(item.service)}">✎</button><button class="button icon delete" onclick="removeService('${item.id}')" aria-label="Excluir ${escapeHTML(item.service)}">⌫</button></div></div>
+        </article>`).join("");
+    }
+
+    function openModal(item = null) {
+      state.editingId = item?.id || null;
+      $("#modal-title").textContent = item ? "Editar serviço" : "Registrar novo serviço";
+      $("#save-button").textContent = item ? "Salvar alterações" : "Registrar serviço";
+      $("#category").value = item?.category || state.category;
+      $("#date").value = item?.date || state.reference;
+      $("#client").value = item?.client || "";
+      $("#service").value = item?.service || "";
+      $("#environment").value = item?.environment || "";
+      $("#quantity").value = item?.quantity || 1;
+      $("#unit-value").value = item?.unitValue || 0;
+      $("#payment").value = item?.payment || "Pix";
+      $("#received").value = item?.received || "nao";
+      $("#notes").value = item?.notes || "";
+      updateFormTotal();
+      $("#modal").classList.add("open");
+      setTimeout(() => $("#client").focus(), 50);
+    }
+
+    function closeModal() {
+      $("#modal").classList.remove("open");
+      state.editingId = null;
+    }
+
+    function updateFormTotal() {
+      $("#form-total").textContent = money(Number($("#quantity").value || 1) * Number($("#unit-value").value || 0));
+    }
+
+    function editService(id) {
+      const item = services.find(service => service.id === id);
+      if (item) openModal(item);
+    }
+
+    function removeService(id) {
+      const item = services.find(service => service.id === id);
+      if (!item || !confirm(`Excluir o serviço “${item.service}”?`)) return;
+      services = services.filter(service => service.id !== id);
+      persist();
+      render();
+      showToast("Serviço excluído");
+    }
+
+    function showToast(message) {
+      const toast = $("#toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => toast.classList.remove("show"), 2300);
+    }
+
+    function isInstalled() {
+      return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+    }
+
+    function openInstallHelp() {
+      $("#install-modal").classList.add("open");
+    }
+
+    function closeInstallHelp() {
+      $("#install-modal").classList.remove("open");
+    }
+
+    document.querySelectorAll(".tab").forEach(tab => tab.addEventListener("click", () => {
+      state.category = tab.dataset.category;
+      render();
+    }));
+
+    $("#reference-date").value = state.reference;
+    $("#reference-date").addEventListener("change", event => { state.reference = event.target.value; render(); });
+    $("#search").addEventListener("input", event => { state.search = event.target.value; render(); });
+    $("#new-service").addEventListener("click", () => openModal());
+    $("#close-modal").addEventListener("click", closeModal);
+    $("#cancel").addEventListener("click", closeModal);
+    $("#quantity").addEventListener("input", updateFormTotal);
+    $("#unit-value").addEventListener("input", updateFormTotal);
+    $("#modal").addEventListener("click", event => { if (event.target === $("#modal")) closeModal(); });
+    $("#close-install").addEventListener("click", closeInstallHelp);
+    $("#understood-install").addEventListener("click", closeInstallHelp);
+    $("#install-modal").addEventListener("click", event => { if (event.target === $("#install-modal")) closeInstallHelp(); });
+    document.addEventListener("keydown", event => { if (event.key === "Escape") { closeModal(); closeInstallHelp(); } });
+
+    $("#install-app").addEventListener("click", async () => {
+      if (installPrompt) {
+        installPrompt.prompt();
+        await installPrompt.userChoice;
+        installPrompt = null;
+        return;
+      }
+      openInstallHelp();
+    });
+
+    window.addEventListener("beforeinstallprompt", event => {
+      event.preventDefault();
+      installPrompt = event;
+      $("#install-app").hidden = false;
+    });
+
+    window.addEventListener("appinstalled", () => {
+      $("#install-app").hidden = true;
+      closeInstallHelp();
+      showToast("Aplicativo instalado");
+    });
+
+    $("#service-form").addEventListener("submit", event => {
+      event.preventDefault();
+      const wasEditing = Boolean(state.editingId);
+      const quantity = Number($("#quantity").value || 1);
+      const unitValue = Number($("#unit-value").value || 0);
+      const record = {
+        id: state.editingId || crypto.randomUUID(),
+        category: $("#category").value,
+        date: $("#date").value,
+        client: $("#client").value.trim(),
+        service: $("#service").value.trim(),
+        environment: $("#environment").value.trim(),
+        quantity,
+        unitValue,
+        total: quantity * unitValue,
+        payment: $("#payment").value,
+        received: $("#received").value,
+        notes: $("#notes").value.trim()
+      };
+      if (state.editingId) services = services.map(item => item.id === state.editingId ? record : item);
+      else services.unshift(record);
+      state.category = record.category;
+      persist();
+      closeModal();
+      render();
+      showToast(wasEditing ? "Serviço atualizado" : "Serviço registrado");
+    });
+
+    document.querySelectorAll("[data-mobile-action]").forEach(button => button.addEventListener("click", () => {
+      const action = button.dataset.mobileAction;
+      if (action === "novo") return openModal();
+      if (action === "buscar") {
+        document.querySelector("#servicos").scrollIntoView({ behavior: "smooth", block: "start" });
+        return setTimeout(() => $("#search").focus(), 450);
+      }
+      document.querySelector("#" + action)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }));
+
+    window.editService = editService;
+    window.removeService = removeService;
+    if (isInstalled()) $("#install-app").hidden = true;
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));
+    }
+    render();
+  </script>
+</body>
+</html>
