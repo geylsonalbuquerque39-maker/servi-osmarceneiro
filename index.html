@@ -646,6 +646,8 @@
     let currentUser = null;
     let realtimeChannel = null;
     let installPrompt = null;
+    let loadRequestId = 0;
+    const deletedServiceIds = new Set();
 
     const money = (value) => Number(value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
     const parseDate = (value) => new Date(value + "T12:00:00");
@@ -745,32 +747,40 @@
 
     async function loadServices(silent = false) {
       if (!currentUser) return;
+      const requestId = ++loadRequestId;
       if (!silent) setSyncStatus("", "Sincronizando...");
       const { data, error } = await supabaseClient
         .from("servicos")
         .select("*")
         .order("service_date", { ascending: false });
       if (error) {
+        if (requestId !== loadRequestId) return;
         setSyncStatus("offline", "Dados locais");
         if (!silent) showToast(friendlyError(error));
         return;
       }
+      if (requestId !== loadRequestId) return;
+      const serverIds = new Set((data || []).map(row => row.id));
+      deletedServiceIds.forEach(id => { if (!serverIds.has(id)) deletedServiceIds.delete(id); });
+      const activeServiceRows = (data || []).filter(row => !deletedServiceIds.has(row.id));
       const { data: photoRows, error: photoError } = await supabaseClient
         .from("service_photos")
         .select("id, service_id, storage_path, file_name, mime_type, size_bytes, created_at")
         .order("created_at", { ascending: true });
+      if (requestId !== loadRequestId) return;
       const photosByService = new Map();
       (photoRows || []).forEach(photo => {
         if (!photosByService.has(photo.service_id)) photosByService.set(photo.service_id, []);
         photosByService.get(photo.service_id).push(photo);
       });
-      const rowsWithPhotos = (data || []).map(row => ({ ...row, service_photos: photosByService.get(row.id) || [] }));
+      const rowsWithPhotos = activeServiceRows.map(row => ({ ...row, service_photos: photosByService.get(row.id) || [] }));
       const paths = (photoRows || []).map(photo => photo.storage_path);
       const signedUrls = new Map();
       if (paths.length) {
         const { data: signedData } = await supabaseClient.storage.from("service-photos").createSignedUrls(paths, 21600);
         (signedData || []).forEach(item => { if (item.signedUrl) signedUrls.set(item.path, item.signedUrl); });
       }
+      if (requestId !== loadRequestId) return;
       services = rowsWithPhotos.map(row => dbToApp(row, signedUrls));
       persistCache();
       render();
@@ -801,6 +811,8 @@
     }
 
     function closeAccount() {
+      loadRequestId++;
+      deletedServiceIds.clear();
       currentUser = null;
       services = [];
       render();
@@ -1119,23 +1131,32 @@
       const item = services.find(service => service.id === id);
       if (!item || !confirm(`Excluir o serviço “${item.service}”?`)) return;
       setSyncStatus("", "Excluindo...");
-      if (item.photos?.length) {
-        const { error: photoError } = await supabaseClient.storage.from("service-photos").remove(item.photos.map(photo => photo.path));
-        if (photoError) {
-          setSyncStatus("offline", "Erro ao sincronizar");
-          return showToast(friendlyError(photoError));
-        }
-      }
-      const { error } = await supabaseClient.from("servicos").delete().eq("id", id);
+      loadRequestId++;
+      const photoPaths = (item.photos || []).map(photo => photo.path);
+      const { data: deletedRows, error } = await supabaseClient.from("servicos").delete().eq("id", id).select("id");
       if (error) {
         setSyncStatus("offline", "Erro ao sincronizar");
         return showToast(friendlyError(error));
       }
+      if (!deletedRows?.length) {
+        const { data: stillExists, error: checkError } = await supabaseClient.from("servicos").select("id").eq("id", id).maybeSingle();
+        if (checkError || stillExists) {
+          setSyncStatus("offline", "Exclusão não confirmada");
+          return showToast("O Supabase não confirmou a exclusão. Tente novamente.");
+        }
+      }
+      deletedServiceIds.add(id);
+      loadRequestId++;
       services = services.filter(service => service.id !== id);
       persistCache();
       render();
       setSyncStatus("online", "Sincronizado");
       showToast("Serviço excluído");
+      if (photoPaths.length) {
+        const { error: photoError } = await supabaseClient.storage.from("service-photos").remove(photoPaths);
+        if (photoError) showToast("Serviço excluído; algumas fotos antigas aguardam limpeza.");
+      }
+      await loadServices(true);
     }
 
     function showToast(message) {
@@ -1240,6 +1261,7 @@
         setSyncStatus("offline", "Erro ao sincronizar");
         return showToast(friendlyError(error));
       }
+      loadRequestId++;
       const saved = dbToApp(data);
       saved.photos = [...state.modalPhotos];
       const pendingPhotos = [...state.pendingPhotos];
