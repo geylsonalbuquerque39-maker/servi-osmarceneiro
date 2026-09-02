@@ -1072,10 +1072,10 @@
       }
     }
 
-    async function deleteQueuedPhotos() {
-      if (!state.deletedPhotos.length) return 0;
-      const paths = state.deletedPhotos.map(photo => photo.path);
-      const ids = state.deletedPhotos.map(photo => photo.id);
+    async function deleteQueuedPhotos(photoList = state.deletedPhotos) {
+      if (!photoList.length) return 0;
+      const paths = photoList.map(photo => photo.path);
+      const ids = photoList.map(photo => photo.id);
       const { error: storageError } = await supabaseClient.storage.from("service-photos").remove(paths);
       if (storageError) throw storageError;
       const { error: databaseError } = await supabaseClient.from("service_photos").delete().in("id", ids);
@@ -1083,10 +1083,10 @@
       return ids.length;
     }
 
-    async function uploadPendingPhotos(serviceId) {
+    async function uploadPendingPhotos(serviceId, pendingPhotos = state.pendingPhotos) {
       let uploaded = 0;
       const failures = [];
-      for (const pending of state.pendingPhotos) {
+      for (const pending of pendingPhotos) {
         let storagePath = "";
         try {
           const optimized = await optimizeImage(pending.file);
@@ -1241,27 +1241,34 @@
         return showToast(friendlyError(error));
       }
       const saved = dbToApp(data);
+      saved.photos = [...state.modalPhotos];
+      const pendingPhotos = [...state.pendingPhotos];
+      const deletedPhotos = [...state.deletedPhotos];
       if (wasEditing) services = services.map(item => item.id === saved.id ? saved : item);
       else services.unshift(saved);
       state.category = saved.category;
+      persistCache();
+      closeModal();
+      render();
+      setSyncStatus("online", pendingPhotos.length ? "Enviando fotos..." : "Sincronizado");
+      showToast(wasEditing ? "Serviço atualizado na hora" : "Serviço adicionado na hora");
+
       const photoFailures = [];
-      if (state.deletedPhotos.length) {
+      if (deletedPhotos.length) {
         setSyncStatus("", "Removendo fotos...");
-        try { await deleteQueuedPhotos(); }
+        try { await deleteQueuedPhotos(deletedPhotos); }
         catch (photoError) { photoFailures.push(friendlyError(photoError)); }
       }
-      if (state.pendingPhotos.length) {
-        setSyncStatus("", `Enviando ${state.pendingPhotos.length} foto(s)...`);
-        const photoResult = await uploadPendingPhotos(saved.id);
+      if (pendingPhotos.length) {
+        setSyncStatus("", `Enviando ${pendingPhotos.length} foto(s)...`);
+        const photoResult = await uploadPendingPhotos(saved.id, pendingPhotos);
         photoFailures.push(...photoResult.failures);
       }
       await loadServices(true);
       persistCache();
-      closeModal();
       render();
       setSyncStatus("online", "Sincronizado");
       if (photoFailures.length) showToast(`Serviço salvo, mas ${photoFailures.length} foto(s) não foram enviadas.`);
-      else showToast(wasEditing ? "Serviço e fotos atualizados" : "Serviço registrado");
     });
 
     $("#install-app").addEventListener("click", async () => {

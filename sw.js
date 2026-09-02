@@ -1,4 +1,4 @@
-const CACHE_NAME = "controle-marceneiro-pwa-v4-carga-segura";
+const CACHE_NAME = "controle-marceneiro-pwa-v5-atualizacao-imediata";
 const APP_SHELL = [
   "./",
   "./index.html",
