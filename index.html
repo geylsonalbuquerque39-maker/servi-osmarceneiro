@@ -109,6 +109,23 @@
       font-weight: 900;
     }
     .install-button[hidden] { display: none; }
+    .sync-badge {
+      min-height: 39px;
+      padding: 8px 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 11px;
+      background: rgba(255,255,255,.08);
+      color: #dbe8f1;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: #f1b85d; }
+    .sync-badge.online .sync-dot { background: #5dde8a; box-shadow: 0 0 0 4px rgba(93,222,138,.14); }
+    .sync-badge.offline .sync-dot { background: #ff837a; }
+    .logout-button { min-height: 39px; padding: 7px 11px; border: 1px solid rgba(255,255,255,.18); border-radius: 11px; background: transparent; color: #fff; font-size: 12px; font-weight: 800; }
 
     .workspace { width: min(1480px, calc(100% - 34px)); margin: 0 auto; padding: 28px 0 44px; }
     .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 18px; }
@@ -308,6 +325,27 @@
     .install-step strong { width: 28px; height: 28px; flex: 0 0 28px; display: grid; place-items: center; border-radius: 9px; background: var(--accent); color: #fff; }
     .install-step b { color: var(--accent-dark); }
 
+    .auth-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      padding: 22px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(145deg, #0c263a, #173f61 55%, #76502d);
+    }
+    .auth-screen[hidden] { display: none; }
+    .auth-card { width: min(440px, 100%); padding: 30px; border-radius: 24px; background: #fff; box-shadow: 0 30px 90px rgba(0,0,0,.32); }
+    .auth-logo { width: 64px; height: 64px; margin-bottom: 20px; display: grid; place-items: center; border-radius: 18px; background: var(--wood); color: #fff; font-size: 30px; }
+    .auth-card h2 { margin: 0 0 7px; font-size: 27px; }
+    .auth-card > p { margin: 0 0 23px; color: var(--muted); line-height: 1.55; }
+    .auth-form { display: grid; gap: 14px; }
+    .auth-form .field input { min-height: 50px; }
+    .auth-actions { display: grid; gap: 10px; margin-top: 4px; }
+    .auth-message { min-height: 21px; margin: 2px 0 0; color: var(--danger); font-size: 13px; font-weight: 700; }
+    .auth-message.success { color: var(--success); }
+    .auth-help { margin-top: 18px; padding-top: 17px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; line-height: 1.5; }
+
     @media (max-width: 1080px) {
       .kpi-grid { grid-template-columns: repeat(2, 1fr); }
       .overview-grid { grid-template-columns: 1fr; }
@@ -326,6 +364,10 @@
       .mode-badge span:last-child { display: none; }
       .install-button { width: 39px; min-height: 39px; padding: 0; justify-content: center; border-radius: 12px; font-size: 18px; }
       .install-button span:last-child { display: none; }
+      .sync-badge { width: 39px; padding: 0; justify-content: center; }
+      .sync-badge span:last-child { display: none; }
+      .logout-button { width: 39px; padding: 0; font-size: 0; }
+      .logout-button::after { content: "↪"; font-size: 18px; }
       .workspace { width: min(100% - 20px, 1480px); padding: 14px 0 20px; }
       .toolbar { align-items: stretch; flex-direction: column; }
       .tabs { width: 100%; padding: 4px; border-radius: 13px; }
@@ -368,6 +410,8 @@
       .modal-footer { flex-direction: column-reverse; }
       .modal-footer .button { width: 100%; min-height: 50px; }
       .toast { top: 76px; right: 12px; left: 12px; text-align: center; }
+      .auth-screen { padding: 12px; align-items: end; }
+      .auth-card { padding: 26px 19px calc(24px + env(safe-area-inset-bottom)); border-radius: 24px 24px 0 0; }
 
       .mobile-bottom-nav {
         position: fixed;
@@ -404,7 +448,8 @@
     </div>
     <div class="topbar-actions">
       <button class="install-button" id="install-app" type="button"><span>⇩</span><span>Instalar app</span></button>
-      <div class="mode-badge"><span class="mode-dot"></span><span>Frontend funcionando</span></div>
+      <div class="sync-badge" id="sync-badge"><span class="sync-dot"></span><span id="sync-text">Conectando...</span></div>
+      <button class="logout-button" id="logout" type="button" title="Sair da conta">Sair</button>
     </div>
   </header>
 
@@ -420,7 +465,7 @@
       </div>
     </section>
 
-    <div class="demo-note"><strong>Frontend pronto para teste.</strong><span>Os dados ficam salvos neste navegador até conectarmos o Supabase.</span></div>
+    <div class="demo-note"><strong id="account-label">Conta conectada.</strong><span>Dados protegidos e sincronizados pelo Supabase.</span></div>
 
     <section class="kpi-grid" aria-label="Resumo da produção">
       <article class="kpi"><div class="kpi-icon">⚒</div><div><span>Produção do dia</span><strong id="daily-total">R$ 0,00</strong><small id="daily-count">0 serviço(s)</small></div></article>
@@ -456,6 +501,24 @@
       <div class="mobile-service-list" id="mobile-service-list"></div>
     </section>
   </main>
+
+  <section class="auth-screen" id="auth-screen" aria-labelledby="auth-title">
+    <div class="auth-card">
+      <div class="auth-logo">⚒</div>
+      <h2 id="auth-title">Controle do Marceneiro</h2>
+      <p>Entre com sua conta para acessar e sincronizar os serviços no celular e no computador.</p>
+      <form class="auth-form" id="auth-form">
+        <div class="field"><label for="auth-email">E-mail</label><input type="email" id="auth-email" autocomplete="email" required placeholder="seuemail@exemplo.com"></div>
+        <div class="field"><label for="auth-password">Senha</label><input type="password" id="auth-password" autocomplete="current-password" minlength="6" required placeholder="Mínimo de 6 caracteres"></div>
+        <p class="auth-message" id="auth-message"></p>
+        <div class="auth-actions">
+          <button class="button" id="login-button" type="submit">Entrar</button>
+          <button class="button secondary" id="signup-button" type="button">Criar primeira conta</button>
+        </div>
+      </form>
+      <div class="auth-help">Use a mesma conta em todos os aparelhos. Depois de criar a conta, guarde o e-mail e a senha em local seguro.</div>
+    </div>
+  </section>
 
   <div class="modal-backdrop" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="modal">
@@ -506,21 +569,23 @@
     <button class="mobile-nav-button" data-mobile-action="buscar"><span class="nav-icon">⌕</span><span>Buscar</span></button>
   </nav>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    const STORAGE_KEY = "controle-marceneiro-frontend-v1";
-    const todayKey = dateKey(new Date());
-    const state = { category: "paraiba", reference: todayKey, search: "", editingId: null };
-    let installPrompt = null;
-
-    const seed = [
-      { id: crypto.randomUUID(), category: "paraiba", date: todayKey, client: "Loja Centro", service: "Montagem de balcão", environment: "Atendimento", quantity: 1, unitValue: 480, total: 480, payment: "Transferência", received: "sim", notes: "" },
-      { id: crypto.randomUUID(), category: "paraiba", date: dateKey(addDays(new Date(), -1)), client: "Unidade Bacuri", service: "Ajuste de portas", environment: "Estoque", quantity: 3, unitValue: 85, total: 255, payment: "Boleto", received: "nao", notes: "Aguardando pagamento" },
-      { id: crypto.randomUUID(), category: "pessoal", date: todayKey, client: "Carlos Mendes", service: "Instalação de painel", environment: "Sala", quantity: 1, unitValue: 650, total: 650, payment: "Pix", received: "parcial", notes: "Entrada de R$ 300,00" }
-    ];
-
-    let services = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null") || seed;
+    const SUPABASE_URL = "https://oitddwdaqeyyzcjfypjd.supabase.co";
+    const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_kHaZfaYgv-7d7QcX5NORPw_yjQaZNIs";
+    const CACHE_PREFIX = "controle-marceneiro-cache-v2-";
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    });
 
     const $ = (selector) => document.querySelector(selector);
+    const todayKey = dateKey(new Date());
+    const state = { category: "paraiba", reference: todayKey, search: "", editingId: null };
+    let services = [];
+    let currentUser = null;
+    let realtimeChannel = null;
+    let installPrompt = null;
+
     const money = (value) => Number(value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
     const parseDate = (value) => new Date(value + "T12:00:00");
     const escapeHTML = (value) => String(value ?? "").replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
@@ -543,8 +608,115 @@
       return result;
     }
 
-    function persist() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(services));
+    function cacheKey() {
+      return currentUser ? CACHE_PREFIX + currentUser.id : null;
+    }
+
+    function persistCache() {
+      if (cacheKey()) localStorage.setItem(cacheKey(), JSON.stringify(services));
+    }
+
+    function loadCache() {
+      try { services = JSON.parse(localStorage.getItem(cacheKey()) || "[]"); }
+      catch { services = []; }
+    }
+
+    function dbToApp(row) {
+      return {
+        id: row.id,
+        category: row.category,
+        date: row.service_date,
+        client: row.client,
+        service: row.service,
+        environment: row.environment || "",
+        quantity: Number(row.quantity),
+        unitValue: Number(row.unit_value),
+        total: Number(row.total),
+        payment: row.payment,
+        received: row.received,
+        notes: row.notes || ""
+      };
+    }
+
+    function appToDb(record) {
+      return {
+        id: record.id,
+        user_id: currentUser.id,
+        category: record.category,
+        service_date: record.date,
+        client: record.client,
+        service: record.service,
+        environment: record.environment || null,
+        quantity: record.quantity,
+        unit_value: record.unitValue,
+        total: record.total,
+        payment: record.payment,
+        received: record.received,
+        notes: record.notes || null
+      };
+    }
+
+    function setSyncStatus(kind, text) {
+      $("#sync-badge").className = "sync-badge " + kind;
+      $("#sync-text").textContent = text;
+    }
+
+    function friendlyError(error) {
+      const message = String(error?.message || error || "Erro desconhecido");
+      if (/invalid login credentials/i.test(message)) return "E-mail ou senha incorretos.";
+      if (/email not confirmed/i.test(message)) return "Confirme o e-mail antes de entrar.";
+      if (/user already registered/i.test(message)) return "Este e-mail já possui uma conta.";
+      if (/relation.*servicos.*does not exist/i.test(message)) return "A tabela ainda não foi criada no Supabase.";
+      if (/failed to fetch|network/i.test(message)) return "Sem conexão com a internet.";
+      return message;
+    }
+
+    async function loadServices(silent = false) {
+      if (!currentUser) return;
+      if (!silent) setSyncStatus("", "Sincronizando...");
+      const { data, error } = await supabaseClient.from("servicos").select("*").order("service_date", { ascending: false });
+      if (error) {
+        setSyncStatus("offline", "Dados locais");
+        if (!silent) showToast(friendlyError(error));
+        return;
+      }
+      services = (data || []).map(dbToApp);
+      persistCache();
+      render();
+      setSyncStatus("online", "Sincronizado");
+    }
+
+    function subscribeRealtime() {
+      if (realtimeChannel) supabaseClient.removeChannel(realtimeChannel);
+      realtimeChannel = supabaseClient
+        .channel("servicos-" + currentUser.id)
+        .on("postgres_changes", { event: "*", schema: "public", table: "servicos", filter: `user_id=eq.${currentUser.id}` }, () => loadServices(true))
+        .subscribe(status => {
+          if (status === "SUBSCRIBED") setSyncStatus("online", "Sincronizado");
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") setSyncStatus("offline", "Reconectando...");
+        });
+    }
+
+    async function openAccount(user) {
+      currentUser = user;
+      loadCache();
+      render();
+      $("#account-label").textContent = user.email || "Conta conectada";
+      $("#auth-screen").hidden = true;
+      subscribeRealtime();
+      await loadServices();
+    }
+
+    function closeAccount() {
+      currentUser = null;
+      services = [];
+      render();
+      $("#auth-screen").hidden = false;
+      setSyncStatus("offline", "Desconectado");
+      if (realtimeChannel) {
+        supabaseClient.removeChannel(realtimeChannel);
+        realtimeChannel = null;
+      }
     }
 
     function categoryName() {
@@ -581,7 +753,6 @@
       $("#paid-count").textContent = monthItems.filter(item => item.received === "sim").length;
       $("#partial-count").textContent = monthItems.filter(item => item.received === "parcial").length;
       $("#unpaid-count").textContent = monthItems.filter(item => item.received === "nao").length;
-
       renderChart(items, reference);
       renderTable(items);
     }
@@ -602,34 +773,30 @@
 
     function renderTable(items) {
       const term = state.search.trim().toLocaleLowerCase("pt-BR");
-      const filtered = items.filter(item => !term || [item.client, item.service, item.environment, item.notes].some(value => String(value).toLocaleLowerCase("pt-BR").includes(term))).sort((a, b) => b.date.localeCompare(a.date));
+      const filtered = items.filter(item => !term || [item.client, item.service, item.environment, item.notes].some(value => String(value || "").toLocaleLowerCase("pt-BR").includes(term))).sort((a, b) => b.date.localeCompare(a.date));
       if (!filtered.length) {
         $("#service-list").innerHTML = `<tr><td colspan="7"><div class="empty"><strong>Nenhum serviço encontrado</strong><span>Use o botão “Novo serviço” para fazer o primeiro lançamento.</span></div></td></tr>`;
         $("#mobile-service-list").innerHTML = `<div class="empty"><strong>Nenhum serviço encontrado</strong><span>Toque no botão central para fazer o primeiro lançamento.</span></div>`;
         return;
       }
       $("#service-list").innerHTML = filtered.map(item => `
-        <tr>
-          <td><strong>${parseDate(item.date).toLocaleDateString("pt-BR")}</strong></td>
-          <td>${escapeHTML(item.client)}</td>
+        <tr><td><strong>${parseDate(item.date).toLocaleDateString("pt-BR")}</strong></td><td>${escapeHTML(item.client)}</td>
           <td><span class="service-title">${escapeHTML(item.service)}</span><span class="service-sub">${escapeHTML(item.payment)}</span></td>
-          <td>${escapeHTML(item.environment || "—")}</td>
-          <td class="align-right"><strong>${money(item.total)}</strong></td>
+          <td>${escapeHTML(item.environment || "—")}</td><td class="align-right"><strong>${money(item.total)}</strong></td>
           <td><span class="status ${item.received}">${item.received === "sim" ? "Recebido" : item.received === "parcial" ? "Parcial" : "Pendente"}</span></td>
-          <td><div class="actions"><button class="button icon" onclick="editService('${item.id}')" aria-label="Editar">✎</button><button class="button icon delete" onclick="removeService('${item.id}')" aria-label="Excluir">⌫</button></div></td>
-        </tr>`).join("");
+          <td><div class="actions"><button class="button icon" onclick="editService('${item.id}')" aria-label="Editar">✎</button><button class="button icon delete" onclick="removeService('${item.id}')" aria-label="Excluir">⌫</button></div></td></tr>`).join("");
 
       $("#mobile-service-list").innerHTML = filtered.map(item => `
         <article class="mobile-service-card">
           <div class="mobile-card-top"><span class="mobile-card-date">${parseDate(item.date).toLocaleDateString("pt-BR")}</span><span class="status ${item.received}">${item.received === "sim" ? "Recebido" : item.received === "parcial" ? "Parcial" : "Pendente"}</span></div>
-          <h3 class="mobile-card-title">${escapeHTML(item.service)}</h3>
-          <p class="mobile-card-client">${escapeHTML(item.client)}</p>
+          <h3 class="mobile-card-title">${escapeHTML(item.service)}</h3><p class="mobile-card-client">${escapeHTML(item.client)}</p>
           <div class="mobile-card-value"><span>${item.quantity} × ${money(item.unitValue)}</span><strong>${money(item.total)}</strong></div>
-          <div class="mobile-card-footer"><span class="mobile-card-place">▣ ${escapeHTML(item.environment || "Sem ambiente informado")}</span><div class="actions"><button class="button icon" onclick="editService('${item.id}')" aria-label="Editar ${escapeHTML(item.service)}">✎</button><button class="button icon delete" onclick="removeService('${item.id}')" aria-label="Excluir ${escapeHTML(item.service)}">⌫</button></div></div>
+          <div class="mobile-card-footer"><span class="mobile-card-place">▣ ${escapeHTML(item.environment || "Sem ambiente informado")}</span><div class="actions"><button class="button icon" onclick="editService('${item.id}')" aria-label="Editar">✎</button><button class="button icon delete" onclick="removeService('${item.id}')" aria-label="Excluir">⌫</button></div></div>
         </article>`).join("");
     }
 
     function openModal(item = null) {
+      if (!currentUser) return;
       state.editingId = item?.id || null;
       $("#modal-title").textContent = item ? "Editar serviço" : "Registrar novo serviço";
       $("#save-button").textContent = item ? "Salvar alterações" : "Registrar serviço";
@@ -662,12 +829,19 @@
       if (item) openModal(item);
     }
 
-    function removeService(id) {
+    async function removeService(id) {
       const item = services.find(service => service.id === id);
       if (!item || !confirm(`Excluir o serviço “${item.service}”?`)) return;
+      setSyncStatus("", "Excluindo...");
+      const { error } = await supabaseClient.from("servicos").delete().eq("id", id);
+      if (error) {
+        setSyncStatus("offline", "Erro ao sincronizar");
+        return showToast(friendlyError(error));
+      }
       services = services.filter(service => service.id !== id);
-      persist();
+      persistCache();
       render();
+      setSyncStatus("online", "Sincronizado");
       showToast("Serviço excluído");
     }
 
@@ -676,26 +850,17 @@
       toast.textContent = message;
       toast.classList.add("show");
       clearTimeout(showToast.timer);
-      showToast.timer = setTimeout(() => toast.classList.remove("show"), 2300);
+      showToast.timer = setTimeout(() => toast.classList.remove("show"), 3000);
     }
 
     function isInstalled() {
       return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
     }
 
-    function openInstallHelp() {
-      $("#install-modal").classList.add("open");
-    }
+    function openInstallHelp() { $("#install-modal").classList.add("open"); }
+    function closeInstallHelp() { $("#install-modal").classList.remove("open"); }
 
-    function closeInstallHelp() {
-      $("#install-modal").classList.remove("open");
-    }
-
-    document.querySelectorAll(".tab").forEach(tab => tab.addEventListener("click", () => {
-      state.category = tab.dataset.category;
-      render();
-    }));
-
+    document.querySelectorAll(".tab").forEach(tab => tab.addEventListener("click", () => { state.category = tab.dataset.category; render(); }));
     $("#reference-date").value = state.reference;
     $("#reference-date").addEventListener("change", event => { state.reference = event.target.value; render(); });
     $("#search").addEventListener("input", event => { state.search = event.target.value; render(); });
@@ -710,73 +875,111 @@
     $("#install-modal").addEventListener("click", event => { if (event.target === $("#install-modal")) closeInstallHelp(); });
     document.addEventListener("keydown", event => { if (event.key === "Escape") { closeModal(); closeInstallHelp(); } });
 
-    $("#install-app").addEventListener("click", async () => {
-      if (installPrompt) {
-        installPrompt.prompt();
-        await installPrompt.userChoice;
-        installPrompt = null;
-        return;
-      }
-      openInstallHelp();
-    });
-
-    window.addEventListener("beforeinstallprompt", event => {
+    $("#auth-form").addEventListener("submit", async event => {
       event.preventDefault();
-      installPrompt = event;
-      $("#install-app").hidden = false;
+      const email = $("#auth-email").value.trim();
+      const password = $("#auth-password").value;
+      $("#auth-message").className = "auth-message";
+      $("#auth-message").textContent = "Entrando...";
+      $("#login-button").disabled = true;
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      $("#login-button").disabled = false;
+      if (error) return $("#auth-message").textContent = friendlyError(error);
+      $("#auth-message").textContent = "";
+      await openAccount(data.user);
     });
 
-    window.addEventListener("appinstalled", () => {
-      $("#install-app").hidden = true;
-      closeInstallHelp();
-      showToast("Aplicativo instalado");
+    $("#signup-button").addEventListener("click", async () => {
+      if (!$("#auth-form").reportValidity()) return;
+      const email = $("#auth-email").value.trim();
+      const password = $("#auth-password").value;
+      $("#auth-message").className = "auth-message";
+      $("#auth-message").textContent = "Criando conta...";
+      $("#signup-button").disabled = true;
+      const { data, error } = await supabaseClient.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: "https://geylsonalbuquerque39-maker.github.io/servi-osmarceneiro/" }
+      });
+      $("#signup-button").disabled = false;
+      if (error) return $("#auth-message").textContent = friendlyError(error);
+      if (data.session) return openAccount(data.user);
+      $("#auth-message").className = "auth-message success";
+      $("#auth-message").textContent = "Conta criada. Abra o e-mail de confirmação e depois toque em Entrar.";
     });
 
-    $("#service-form").addEventListener("submit", event => {
+    $("#logout").addEventListener("click", async () => {
+      if (!confirm("Deseja sair desta conta?")) return;
+      await supabaseClient.auth.signOut();
+      closeAccount();
+    });
+
+    $("#service-form").addEventListener("submit", async event => {
       event.preventDefault();
       const wasEditing = Boolean(state.editingId);
       const quantity = Number($("#quantity").value || 1);
       const unitValue = Number($("#unit-value").value || 0);
       const record = {
-        id: state.editingId || crypto.randomUUID(),
-        category: $("#category").value,
-        date: $("#date").value,
-        client: $("#client").value.trim(),
-        service: $("#service").value.trim(),
-        environment: $("#environment").value.trim(),
-        quantity,
-        unitValue,
-        total: quantity * unitValue,
-        payment: $("#payment").value,
-        received: $("#received").value,
-        notes: $("#notes").value.trim()
+        id: state.editingId || crypto.randomUUID(), category: $("#category").value, date: $("#date").value,
+        client: $("#client").value.trim(), service: $("#service").value.trim(), environment: $("#environment").value.trim(),
+        quantity, unitValue, total: quantity * unitValue, payment: $("#payment").value,
+        received: $("#received").value, notes: $("#notes").value.trim()
       };
-      if (state.editingId) services = services.map(item => item.id === state.editingId ? record : item);
-      else services.unshift(record);
-      state.category = record.category;
-      persist();
+      $("#save-button").disabled = true;
+      $("#save-button").textContent = "Salvando...";
+      setSyncStatus("", "Salvando...");
+      const { data, error } = await supabaseClient.from("servicos").upsert(appToDb(record)).select().single();
+      $("#save-button").disabled = false;
+      if (error) {
+        $("#save-button").textContent = wasEditing ? "Salvar alterações" : "Registrar serviço";
+        setSyncStatus("offline", "Erro ao sincronizar");
+        return showToast(friendlyError(error));
+      }
+      const saved = dbToApp(data);
+      if (wasEditing) services = services.map(item => item.id === saved.id ? saved : item);
+      else services.unshift(saved);
+      state.category = saved.category;
+      persistCache();
       closeModal();
       render();
+      setSyncStatus("online", "Sincronizado");
       showToast(wasEditing ? "Serviço atualizado" : "Serviço registrado");
     });
+
+    $("#install-app").addEventListener("click", async () => {
+      if (installPrompt) { installPrompt.prompt(); await installPrompt.userChoice; installPrompt = null; return; }
+      openInstallHelp();
+    });
+    window.addEventListener("beforeinstallprompt", event => { event.preventDefault(); installPrompt = event; $("#install-app").hidden = false; });
+    window.addEventListener("appinstalled", () => { $("#install-app").hidden = true; closeInstallHelp(); showToast("Aplicativo instalado"); });
+    window.addEventListener("online", () => { if (currentUser) loadServices(); });
+    window.addEventListener("offline", () => setSyncStatus("offline", "Sem internet"));
 
     document.querySelectorAll("[data-mobile-action]").forEach(button => button.addEventListener("click", () => {
       const action = button.dataset.mobileAction;
       if (action === "novo") return openModal();
-      if (action === "buscar") {
-        document.querySelector("#servicos").scrollIntoView({ behavior: "smooth", block: "start" });
-        return setTimeout(() => $("#search").focus(), 450);
-      }
+      if (action === "buscar") { document.querySelector("#servicos").scrollIntoView({ behavior: "smooth", block: "start" }); return setTimeout(() => $("#search").focus(), 450); }
       document.querySelector("#" + action)?.scrollIntoView({ behavior: "smooth", block: "start" });
     }));
 
     window.editService = editService;
     window.removeService = removeService;
     if (isInstalled()) $("#install-app").hidden = true;
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));
-    }
-    render();
+    if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));
+
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") closeAccount();
+      if (session?.user) setTimeout(() => {
+        if (session.user.id !== currentUser?.id) openAccount(session.user);
+      }, 0);
+    });
+
+    (async function initialize() {
+      render();
+      const { data } = await supabaseClient.auth.getSession();
+      if (data.session?.user) await openAccount(data.session.user);
+      else closeAccount();
+    })();
   </script>
 </body>
 </html>
