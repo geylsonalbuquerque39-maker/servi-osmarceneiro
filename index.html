@@ -121,6 +121,7 @@
       color: #dbe8f1;
       font-size: 12px;
       font-weight: 800;
+      cursor: pointer;
     }
     .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: #f1b85d; }
     .sync-badge.online .sync-dot { background: #5dde8a; box-shadow: 0 0 0 4px rgba(93,222,138,.14); }
@@ -487,7 +488,7 @@
     </div>
     <div class="topbar-actions">
       <button class="install-button" id="install-app" type="button"><span>⇩</span><span>Instalar app</span></button>
-      <div class="sync-badge" id="sync-badge"><span class="sync-dot"></span><span id="sync-text">Conectando...</span></div>
+      <button class="sync-badge" id="sync-badge" type="button" title="Atualizar agora"><span class="sync-dot"></span><span id="sync-text">Conectando...</span></button>
       <button class="logout-button" id="logout" type="button" title="Sair da conta">Sair</button>
     </div>
   </header>
@@ -763,11 +764,26 @@
       const serverIds = new Set((data || []).map(row => row.id));
       deletedServiceIds.forEach(id => { if (!serverIds.has(id)) deletedServiceIds.delete(id); });
       const activeServiceRows = (data || []).filter(row => !deletedServiceIds.has(row.id));
+      const previousPhotos = new Map(services.map(service => [service.id, service.photos || []]));
+      services = activeServiceRows.map(row => {
+        const service = dbToApp(row);
+        service.photos = previousPhotos.get(row.id) || [];
+        return service;
+      });
+      persistCache();
+      render();
+      setSyncStatus("online", "Serviços atualizados");
+
       const { data: photoRows, error: photoError } = await supabaseClient
         .from("service_photos")
         .select("id, service_id, storage_path, file_name, mime_type, size_bytes, created_at")
         .order("created_at", { ascending: true });
       if (requestId !== loadRequestId) return;
+      if (photoError) {
+        setSyncStatus("online", "Serviços sincronizados");
+        if (!silent) showToast("Serviços carregados. Execute a atualização SQL para ativar as fotos.");
+        return;
+      }
       const photosByService = new Map();
       (photoRows || []).forEach(photo => {
         if (!photosByService.has(photo.service_id)) photosByService.set(photo.service_id, []);
@@ -785,7 +801,6 @@
       persistCache();
       render();
       setSyncStatus("online", "Sincronizado");
-      if (photoError && !silent) showToast("Serviços carregados. Execute a atualização SQL para ativar as fotos.");
     }
 
     function subscribeRealtime() {
@@ -1301,6 +1316,16 @@
     window.addEventListener("appinstalled", () => { $("#install-app").hidden = true; closeInstallHelp(); showToast("Aplicativo instalado"); });
     window.addEventListener("online", () => { if (currentUser) loadServices(); });
     window.addEventListener("offline", () => setSyncStatus("offline", "Sem internet"));
+    window.addEventListener("focus", () => { if (currentUser) loadServices(true); });
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden && currentUser) loadServices(true);
+    });
+    $("#sync-badge").addEventListener("click", () => {
+      if (currentUser) loadServices(false);
+    });
+    setInterval(() => {
+      if (currentUser && !document.hidden && navigator.onLine) loadServices(true);
+    }, 30000);
 
     document.querySelectorAll("[data-mobile-action]").forEach(button => button.addEventListener("click", () => {
       const action = button.dataset.mobileAction;
@@ -1315,7 +1340,20 @@
     window.openLightbox = openLightbox;
     window.removeModalPhoto = removeModalPhoto;
     if (isInstalled()) $("#install-app").hidden = true;
-    if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));
+    if ("serviceWorker" in navigator) {
+      let refreshingForUpdate = false;
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (refreshingForUpdate || $("#modal").classList.contains("open")) return;
+        refreshingForUpdate = true;
+        window.location.reload();
+      });
+      window.addEventListener("load", async () => {
+        try {
+          const registration = await navigator.serviceWorker.register("./sw.js?v=7");
+          await registration.update();
+        } catch {}
+      });
+    }
 
     supabaseClient.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_OUT") closeAccount();

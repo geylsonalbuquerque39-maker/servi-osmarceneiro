@@ -1,4 +1,4 @@
-const CACHE_NAME = "controle-marceneiro-pwa-v6-sincronizacao-ordenada";
+const CACHE_NAME = "controle-marceneiro-pwa-v7-mobile-refresh";
 const APP_SHELL = [
   "./",
   "./index.html",
