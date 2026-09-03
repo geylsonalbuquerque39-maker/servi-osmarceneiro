@@ -1,4 +1,4 @@
-const CACHE_NAME = "controle-marceneiro-pwa-v7-mobile-refresh";
+const CACHE_NAME = "controle-marceneiro-pwa-v8-aba-servicos";
 const APP_SHELL = [
   "./",
   "./index.html",
