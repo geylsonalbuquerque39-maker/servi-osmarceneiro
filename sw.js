@@ -1,4 +1,4 @@
-const CACHE_NAME = "controle-marceneiro-pwa-v8-aba-servicos";
+const CACHE_NAME = "controle-marceneiro-pwa-v9-leitura-direta";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -23,6 +23,12 @@ self.addEventListener("activate", event => {
 
 self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
+
+  const requestUrl = new URL(event.request.url);
+  if (requestUrl.origin !== self.location.origin) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
 
   if (event.request.mode === "navigate") {
     event.respondWith(

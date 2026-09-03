@@ -2,6 +2,12 @@
 
 Sistema responsivo para registrar serviços e acompanhar a produção diária, semanal e mensal nas categorias **Serviços Paraíba** e **Pessoais**. Possui login, banco de dados Supabase, sincronização entre aparelhos e fotos privadas em cada serviço.
 
+## Sincronização no celular
+
+Esta versão consulta os serviços diretamente no Supabase e nunca guarda respostas do banco no cache do PWA. No celular, a lista fica na aba **Serviços** e mostra a quantidade encontrada, a conta conectada e o horário da atualização. No computador, a lista continua na tela inicial, abaixo dos gráficos.
+
+Para atualizar uma instalação existente, substitua todos os arquivos do repositório pelos arquivos deste pacote. Não é necessário apagar serviços nem executar novamente o SQL apenas por causa desta correção.
+
 ## Atualização das fotos
 
 Mesmo que você já tenha configurado a versão anterior, execute novamente o arquivo completo `SUPABASE_SETUP.sql`. Ele preserva os serviços existentes e adiciona:

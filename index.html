@@ -130,11 +130,20 @@
 
     .workspace { width: min(1480px, calc(100% - 34px)); margin: 0 auto; padding: 28px 0 44px; }
     .app-view[hidden] { display: none !important; }
-    .page-nav { margin-bottom: 18px; padding: 5px; display: inline-flex; gap: 5px; border: 1px solid var(--line); border-radius: 15px; background: var(--surface); box-shadow: 0 5px 16px rgba(22,32,44,.04); }
+    .page-nav { margin-bottom: 18px; padding: 5px; display: none; gap: 5px; border: 1px solid var(--line); border-radius: 15px; background: var(--surface); box-shadow: 0 5px 16px rgba(22,32,44,.04); }
     .view-button { min-height: 44px; padding: 10px 20px; border: 0; border-radius: 11px; background: transparent; color: var(--muted); font-weight: 900; }
     .view-button.active { background: var(--accent-dark); color: #fff; box-shadow: 0 7px 16px rgba(16,44,67,.2); }
     .services-toolbar { margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
     .services-toolbar-actions { display: flex; align-items: center; gap: 10px; }
+    .services-fetch-status { margin-bottom: 14px; padding: 13px 15px; display: flex; align-items: center; gap: 11px; border: 1px solid #c9dce9; border-radius: 14px; background: #f7fbfe; color: #28465d; }
+    .services-fetch-status .fetch-dot { width: 10px; height: 10px; flex: 0 0 10px; border-radius: 50%; background: #d99a1b; box-shadow: 0 0 0 4px rgba(217,154,27,.12); }
+    .services-fetch-status strong, .services-fetch-status small { display: block; }
+    .services-fetch-status strong { margin-bottom: 2px; font-size: 13px; }
+    .services-fetch-status small { color: var(--muted); font-size: 11px; line-height: 1.35; }
+    .services-fetch-status.success { border-color: #b9dfc8; background: #f3fbf6; color: #176b3b; }
+    .services-fetch-status.success .fetch-dot { background: #1f8a4c; box-shadow: 0 0 0 4px rgba(31,138,76,.12); }
+    .services-fetch-status.error { border-color: #efbcbc; background: #fff5f5; color: #a82929; }
+    .services-fetch-status.error .fetch-dot { background: #c33131; box-shadow: 0 0 0 4px rgba(195,49,49,.12); }
     .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 18px; }
 
     .tabs {
@@ -406,7 +415,7 @@
       .logout-button { width: 39px; padding: 0; font-size: 0; }
       .logout-button::after { content: "↪"; font-size: 18px; }
       .workspace { width: min(100% - 20px, 1480px); padding: 14px 0 20px; }
-      .page-nav { width: 100%; margin-bottom: 14px; }
+      .page-nav { width: 100%; margin-bottom: 14px; display: flex; }
       .view-button { flex: 1; padding: 9px 10px; }
       .services-toolbar { align-items: stretch; flex-direction: column; }
       .services-toolbar .tabs { width: 100%; }
@@ -545,6 +554,7 @@
           <div class="payment-item"><span class="payment-dot pending"></span><div><span>Pendentes</span><strong id="unpaid-count">0</strong></div></div>
         </article>
       </section>
+      <div id="desktop-services-host"></div>
     </section>
 
     <section class="app-view" id="services-view" hidden>
@@ -558,6 +568,11 @@
           <button class="button" id="new-service-services" type="button">＋ Novo serviço</button>
         </div>
       </div>
+      <div class="services-fetch-status" id="services-fetch-status" role="status" aria-live="polite">
+        <span class="fetch-dot"></span>
+        <div><strong id="services-fetch-title">Pronto para buscar</strong><small id="services-fetch-detail">Toque em Atualizar para consultar o Supabase.</small></div>
+      </div>
+      <div id="mobile-services-host">
       <section class="panel services-panel" id="servicos">
         <div class="services-header">
           <div><span class="panel-kicker">DADOS DO SUPABASE</span><h2 id="services-title">Serviços Paraíba</h2></div>
@@ -571,6 +586,7 @@
         </div>
         <div class="mobile-service-list" id="mobile-service-list"></div>
       </section>
+      </div>
     </section>
   </main>
 
@@ -666,7 +682,10 @@
     const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_kHaZfaYgv-7d7QcX5NORPw_yjQaZNIs";
     const CACHE_PREFIX = "controle-marceneiro-cache-v2-";
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+      global: {
+        fetch: (url, options = {}) => fetch(url, { ...options, cache: "no-store" })
+      }
     });
 
     const $ = (selector) => document.querySelector(selector);
@@ -680,6 +699,8 @@
     let realtimeChannel = null;
     let installPrompt = null;
     let loadRequestId = 0;
+    let directRefreshId = 0;
+    const mobileLayout = window.matchMedia("(max-width: 760px)");
     const deletedServiceIds = new Set();
 
     const money = (value) => Number(value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -778,6 +799,91 @@
       return message;
     }
 
+    function setServicesFetchStatus(kind, title, detail) {
+      const status = $("#services-fetch-status");
+      if (!status) return;
+      status.className = "services-fetch-status" + (kind ? " " + kind : "");
+      $("#services-fetch-title").textContent = title;
+      $("#services-fetch-detail").textContent = detail;
+    }
+
+    function placeServicesPanel() {
+      const panel = $("#servicos");
+      const host = mobileLayout.matches ? $("#mobile-services-host") : $("#desktop-services-host");
+      if (panel && host && panel.parentElement !== host) host.appendChild(panel);
+    }
+
+    async function hydrateDirectPhotos(rows, refreshId) {
+      const { data: photoRows, error } = await supabaseClient
+        .from("service_photos")
+        .select("id, service_id, storage_path, file_name, mime_type, size_bytes, created_at")
+        .order("created_at", { ascending: true });
+      if (error || refreshId !== directRefreshId) return;
+      const photosByService = new Map();
+      (photoRows || []).forEach(photo => {
+        if (!photosByService.has(photo.service_id)) photosByService.set(photo.service_id, []);
+        photosByService.get(photo.service_id).push(photo);
+      });
+      const paths = (photoRows || []).map(photo => photo.storage_path);
+      const signedUrls = new Map();
+      if (paths.length) {
+        const { data: signedData } = await supabaseClient.storage.from("service-photos").createSignedUrls(paths, 21600);
+        (signedData || []).forEach(item => { if (item.signedUrl) signedUrls.set(item.path, item.signedUrl); });
+      }
+      if (refreshId !== directRefreshId) return;
+      services = rows.map(row => dbToApp({ ...row, service_photos: photosByService.get(row.id) || [] }, signedUrls));
+      persistCache();
+      render();
+    }
+
+    async function refreshServicesDirect(showErrorToast = false) {
+      if (!currentUser) {
+        setServicesFetchStatus("error", "Sessão encerrada", "Entre novamente para consultar os serviços.");
+        return;
+      }
+      const refreshId = ++directRefreshId;
+      loadRequestId++;
+      const account = currentUser.email || currentUser.id;
+      setSyncStatus("", "Buscando serviços...");
+      setServicesFetchStatus("", "Consultando o Supabase...", `Conta: ${account}`);
+      try {
+        const { data, error } = await supabaseClient
+          .from("servicos")
+          .select("*")
+          .eq("user_id", currentUser.id)
+          .order("service_date", { ascending: false })
+          .order("created_at", { ascending: false });
+        if (refreshId !== directRefreshId) return;
+        if (error) throw error;
+
+        deletedServiceIds.clear();
+        const previousPhotos = new Map(services.map(service => [service.id, service.photos || []]));
+        services = (data || []).map(row => {
+          const service = dbToApp(row);
+          service.photos = previousPhotos.get(row.id) || [];
+          return service;
+        });
+        persistCache();
+        render();
+
+        const count = services.length;
+        const time = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+        setSyncStatus("online", `${count} serviço(s)`);
+        setServicesFetchStatus(
+          "success",
+          count ? `${count} serviço(s) encontrado(s) no Supabase` : "Nenhum serviço encontrado no Supabase",
+          `Conta: ${account} • Atualizado às ${time}`
+        );
+        hydrateDirectPhotos(data || [], refreshId).catch(() => {});
+      } catch (error) {
+        if (refreshId !== directRefreshId) return;
+        const message = friendlyError(error);
+        setSyncStatus("offline", "Erro na consulta");
+        setServicesFetchStatus("error", "Não foi possível buscar os serviços", `Conta: ${account} • ${message}`);
+        if (showErrorToast) showToast(message);
+      }
+    }
+
     async function loadServices(silent = false) {
       if (!currentUser) return;
       const requestId = ++loadRequestId;
@@ -839,8 +945,8 @@
       if (realtimeChannel) supabaseClient.removeChannel(realtimeChannel);
       realtimeChannel = supabaseClient
         .channel("servicos-" + currentUser.id)
-        .on("postgres_changes", { event: "*", schema: "public", table: "servicos", filter: `user_id=eq.${currentUser.id}` }, () => loadServices(true))
-        .on("postgres_changes", { event: "*", schema: "public", table: "service_photos", filter: `user_id=eq.${currentUser.id}` }, () => loadServices(true))
+        .on("postgres_changes", { event: "*", schema: "public", table: "servicos", filter: `user_id=eq.${currentUser.id}` }, () => refreshServicesDirect(false))
+        .on("postgres_changes", { event: "*", schema: "public", table: "service_photos", filter: `user_id=eq.${currentUser.id}` }, () => refreshServicesDirect(false))
         .subscribe(status => {
           if (status === "SUBSCRIBED") setSyncStatus("online", "Sincronizado");
           if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") setSyncStatus("offline", "Reconectando...");
@@ -854,11 +960,12 @@
       $("#account-label").textContent = user.email || "Conta conectada";
       $("#auth-screen").hidden = true;
       subscribeRealtime();
-      await loadServices();
+      await refreshServicesDirect(true);
     }
 
     function closeAccount() {
       loadRequestId++;
+      directRefreshId++;
       deletedServiceIds.clear();
       currentUser = null;
       services = [];
@@ -872,7 +979,8 @@
     }
 
     async function switchView(view, refreshFromSupabase = true) {
-      state.view = view === "services" ? "services" : "home";
+      placeServicesPanel();
+      state.view = mobileLayout.matches && view === "services" ? "services" : "home";
       $("#home-view").hidden = state.view !== "home";
       $("#services-view").hidden = state.view !== "services";
       document.querySelectorAll("[data-view]").forEach(button => button.classList.toggle("active", button.dataset.view === state.view));
@@ -880,8 +988,7 @@
       document.querySelectorAll("[data-mobile-action='servicos']").forEach(button => button.classList.toggle("active", state.view === "services"));
       window.scrollTo({ top: 0, behavior: "smooth" });
       if (state.view === "services" && refreshFromSupabase && currentUser) {
-        setSyncStatus("", "Buscando serviços...");
-        await loadServices(false);
+        await refreshServicesDirect(true);
       }
     }
 
@@ -1217,7 +1324,7 @@
         const { error: photoError } = await supabaseClient.storage.from("service-photos").remove(photoPaths);
         if (photoError) showToast("Serviço excluído; algumas fotos antigas aguardam limpeza.");
       }
-      await loadServices(true);
+      await refreshServicesDirect(false);
     }
 
     function showToast(message) {
@@ -1242,7 +1349,7 @@
     $("#search").addEventListener("input", event => { state.search = event.target.value; render(); });
     $("#new-service").addEventListener("click", () => openModal());
     $("#new-service-services").addEventListener("click", () => openModal());
-    $("#refresh-services").addEventListener("click", () => loadServices(false));
+    $("#refresh-services").addEventListener("click", () => refreshServicesDirect(true));
     $("#close-modal").addEventListener("click", closeModal);
     $("#cancel").addEventListener("click", closeModal);
     $("#quantity").addEventListener("input", updateFormTotal);
@@ -1351,7 +1458,7 @@
         const photoResult = await uploadPendingPhotos(saved.id, pendingPhotos);
         photoFailures.push(...photoResult.failures);
       }
-      await loadServices(true);
+      await refreshServicesDirect(false);
       persistCache();
       render();
       setSyncStatus("online", "Sincronizado");
@@ -1364,18 +1471,25 @@
     });
     window.addEventListener("beforeinstallprompt", event => { event.preventDefault(); installPrompt = event; $("#install-app").hidden = false; });
     window.addEventListener("appinstalled", () => { $("#install-app").hidden = true; closeInstallHelp(); showToast("Aplicativo instalado"); });
-    window.addEventListener("online", () => { if (currentUser) loadServices(); });
+    window.addEventListener("online", () => { if (currentUser) refreshServicesDirect(false); });
     window.addEventListener("offline", () => setSyncStatus("offline", "Sem internet"));
-    window.addEventListener("focus", () => { if (currentUser) loadServices(true); });
+    window.addEventListener("focus", () => { if (currentUser) refreshServicesDirect(false); });
     document.addEventListener("visibilitychange", () => {
-      if (!document.hidden && currentUser) loadServices(true);
+      if (!document.hidden && currentUser) refreshServicesDirect(false);
     });
     $("#sync-badge").addEventListener("click", () => {
-      if (currentUser) loadServices(false);
+      if (currentUser) refreshServicesDirect(true);
     });
     setInterval(() => {
-      if (currentUser && !document.hidden && navigator.onLine) loadServices(true);
+      if (currentUser && !document.hidden && navigator.onLine) refreshServicesDirect(false);
     }, 30000);
+
+    const handleLayoutChange = () => {
+      placeServicesPanel();
+      if (!mobileLayout.matches && state.view === "services") switchView("home", false);
+    };
+    if (mobileLayout.addEventListener) mobileLayout.addEventListener("change", handleLayoutChange);
+    else mobileLayout.addListener(handleLayoutChange);
 
     document.querySelectorAll("[data-mobile-action]").forEach(button => button.addEventListener("click", async () => {
       const action = button.dataset.mobileAction;
@@ -1407,7 +1521,7 @@
       });
       window.addEventListener("load", async () => {
         try {
-          const registration = await navigator.serviceWorker.register("./sw.js?v=8");
+          const registration = await navigator.serviceWorker.register("./sw.js?v=9");
           await registration.update();
         } catch {}
       });
