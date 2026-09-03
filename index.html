@@ -529,6 +529,7 @@
         </div>
         <div class="toolbar-actions">
           <div class="date-box"><span>📅</span><label for="reference-date">Data de referência</label><input type="date" id="reference-date"></div>
+          <button class="button secondary" id="refresh-home" type="button">↻ Atualizar</button>
           <button class="button" id="new-service">＋ Novo serviço</button>
         </div>
       </section>
@@ -1349,6 +1350,7 @@
     $("#search").addEventListener("input", event => { state.search = event.target.value; render(); });
     $("#new-service").addEventListener("click", () => openModal());
     $("#new-service-services").addEventListener("click", () => openModal());
+    $("#refresh-home").addEventListener("click", () => refreshServicesDirect(true));
     $("#refresh-services").addEventListener("click", () => refreshServicesDirect(true));
     $("#close-modal").addEventListener("click", closeModal);
     $("#cancel").addEventListener("click", closeModal);
@@ -1521,7 +1523,7 @@
       });
       window.addEventListener("load", async () => {
         try {
-          const registration = await navigator.serviceWorker.register("./sw.js?v=9");
+          const registration = await navigator.serviceWorker.register("./sw.js?v=10");
           await registration.update();
         } catch {}
       });

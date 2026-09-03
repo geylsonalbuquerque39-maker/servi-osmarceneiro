@@ -1,4 +1,4 @@
-const CACHE_NAME = "controle-marceneiro-pwa-v9-leitura-direta";
+const CACHE_NAME = "controle-marceneiro-pwa-v10-atualizar-inicio";
 const APP_SHELL = [
   "./",
   "./index.html",
